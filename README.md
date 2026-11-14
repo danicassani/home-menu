@@ -63,6 +63,6 @@ npm run preview
 
 Cloudflare Pages: comando de build `npm run build`, directorio de salida `dist`, Node.js 22 o posterior y las dos variables públicas configuradas antes de compilar. `public/_redirects` permite rutas de SPA. Esta entrega no despliega automáticamente.
 
-**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. Pendientes: transferencias, expulsiones, salida/eliminación de casas, carta, menú, compra y PWA. Interfaz minimalista; único eslogan: «Olvida el 'qué comemos'».
+**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. Pendientes: transferencias, expulsiones, salida/eliminación de casas, carta, menú, compra y PWA. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
 
 Antes de desplegar esta entrega, aplica `supabase/migrations/202611140001_households.sql` una sola vez en el SQL Editor de Supabase. No contiene datos de ejemplo. Activa RLS y limita las escrituras a funciones transaccionales. No se ha aplicado automáticamente. Las pruebas SQL se ejecutan contra PostgreSQL local embebido (PGlite) con roles Auth simulados, sin conectarse a producción. Las pruebas de interfaz simulan el cliente Supabase.

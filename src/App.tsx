@@ -54,17 +54,19 @@ export default function App() {
   const name = String(session?.user.user_metadata.full_name || 'Tu perfil');
   return <div className="app-shell">
     <a href="#contenido" className="skip-link">Saltar al contenido</a>
-    <header><a href="/" className="brand">Home Menu</a>{session && <span>{name}</span>}</header>
-    <main id="contenido">
-      {!session && <h1>Olvida el 'qué comemos'</h1>}
+    <header><a href="/" className="brand"><span className="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M4 11a8 8 0 0 1 16 0M3 15h18M6 19h12M12 3V1" strokeLinecap="round"/></svg></span>Home Menu</a>{session && <div className="identity"><span className="avatar" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span><span>{name}</span></div>}</header>
+    <main id="contenido" className={session ? 'workspace' : 'login'}>
+      <div className="surface">
+      {!session && <><div className="login-mark" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="24" cy="24" r="14"/><circle cx="24" cy="24" r="9"/><path d="M4 9v9m4-9v9m-4-3h4m-2 3v21M42 9c-4 5-4 12 0 14v16m0-30v14" strokeLinecap="round"/></svg></div><h1>Olvida el <span>'qué comemos'</span></h1></>}
       {!online && <p role="status">Sin conexión.</p>}
       {error && <p role="alert">{error}</p>}
       {loading ? <p role="status">Cargando…</p> : session ? <>
         <h1>Hola, {name}</h1>
         <Household key={session.user.id} userId={session.user.id} online={online}/>
-        <button onClick={() => void signOut()} disabled={busy || !online}>Cerrar sesión</button>
+        <button className="secondary signout" onClick={() => void signOut()} disabled={busy || !online}>Cerrar sesión</button>
       </> : <button onClick={() => void signIn()} disabled={!supabase || busy || !online}>{busy ? 'Conectando…' : 'Continuar con Google'}</button>}
       {!supabase && <p role="status">Falta conectar este entorno con Supabase.</p>}
+      </div>
     </main>
   </div>;
 }

@@ -16,7 +16,7 @@ Existe una base React ejecutable con acceso Google y pruebas. Las casas y las fu
 
 ## Diseño
 
-- Interfaz minimalista, sin decoración ni textos promocionales. Único eslogan permitido: «Olvida el 'qué comemos'». Usa etiquetas y mensajes breves.
+- Interfaz estética y contenida: tipografía cuidada, tarjetas, color y espaciado; sin textos promocionales ni relleno. Único eslogan permitido: «Olvida el 'qué comemos'». Usa etiquetas y mensajes breves.
 
 ## Implementación
 
