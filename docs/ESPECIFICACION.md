@@ -2,7 +2,7 @@
 
 ## Estado y objetivo
 
-Documento para implementar una PWA móvil en español que permita a varios hogares independientes compartir platos, planificar la semana y comprar sus ingredientes. Actualmente el repositorio contiene documentación; la aplicación, sus migraciones y sus pruebas están pendientes.
+Documento para implementar una PWA móvil en español que permita a varios hogares independientes compartir platos, planificar la semana y comprar sus ingredientes. Actualmente existe una base React con portada, acceso Google, sesión y pruebas de cliente. Casas, invitaciones y demás funciones están pendientes; la fase 1 aún no está completa.
 
 El README actualizado desde `main` es la referencia funcional más reciente. Sustituye estas decisiones de la conversación inicial: el menú incluye desayuno, la compra muestra nombres sin cantidades y la primera versión incorpora alternativas, kilocalorías opcionales y personalización visual. No se debe implementar la suma de cantidades del plan anterior.
 
@@ -104,4 +104,4 @@ Registro abierto con Google y contenido privado por casa. Sin panel global, IA, 
 
 No mezclar datos de ejemplo con datos reales. La eliminación de una casa incluye sus datos y fotos; no elimina automáticamente las cuentas Google/Supabase de sus miembros. La gestión de borrado de cuenta y las políticas legales deberán definirse antes de un lanzamiento público; no confundir la validación de desarrollo con aprobación de ese lanzamiento.
 
-No hay comandos de instalación, desarrollo o pruebas comprobados todavía. Documentarlos en README al crear la base ejecutable y verificarlos antes de afirmar que el entorno está listo.
+Los comandos de instalación, desarrollo y comprobación de la base están documentados en README. El acceso real necesita configuración de Supabase; las pruebas de cliente no sustituyen esa validación.

@@ -38,4 +38,29 @@ El nombre del usuario y su avatar aparecerán en la esquina superior derecha. Al
 
 La base técnica prevista es React con TypeScript, Vite y Tailwind CSS en Cloudflare Pages, con Supabase para autenticación, datos, fotos privadas y sincronización. La interfaz será móvil y estará en español.
 
-El repositorio está en fase de definición: todavía no contiene la aplicación, dependencias, migraciones ni pruebas ejecutables. Los comandos de instalación, desarrollo y validación se documentarán cuando se implemente la base técnica y se hayan comprobado. No se necesitan credenciales para trabajar en esta documentación.
+El repositorio contiene una base ejecutable de acceso; la gestión de hogares y las funciones de planificación siguen pendientes. Consulta los comandos y limitaciones más abajo.
+
+## Ejecutar la base de la aplicación
+
+Requiere Node.js 22 o posterior y npm. Desde la raíz:
+
+```sh
+npm ci
+cp .env.example .env.local
+npm run dev
+```
+
+Completa `.env.local` con la URL y la clave pública de tu proyecto Supabase (`VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`). No uses una clave `service_role`. Sin configuración se puede consultar la portada, pero el acceso está deshabilitado.
+
+En Supabase, activa Google en Authentication → Sign In / Providers y configura sus credenciales de OAuth. En Google, autoriza el callback de Supabase que muestra el proveedor. En Authentication → URL Configuration añade el origen de desarrollo (`http://localhost:5173/`) y el origen de producción autorizado. El retorno de la aplicación siempre usa su propio origen. No autorices comodines generales para producción.
+
+```sh
+npm run typecheck
+npm test
+npm run build
+npm run preview
+```
+
+Cloudflare Pages: comando de build `npm run build`, directorio de salida `dist`, Node.js 22 o posterior y las dos variables públicas configuradas antes de compilar. `public/_redirects` permite rutas de SPA. Esta entrega no despliega automáticamente.
+
+**Estado de esta entrega:** portada móvil, restauración de sesión, entrada con Google y cierre de sesión. Todavía no incluye casas, invitaciones, carta, menú, compra ni instalación PWA. No requiere migraciones SQL. Las pruebas de acceso usan un cliente simulado; la validación real de Google requiere configurar Supabase.
