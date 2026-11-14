@@ -4,7 +4,7 @@
 
 Lee README.md y docs/ESPECIFICACION.md antes de modificar comportamiento. El README obtenido de main incorpora requisitos posteriores al plan inicial: desayuno, alternativas, compra por nombres y perfil/temas. La especificación integra esos cambios; no recuperes reglas antiguas de cantidades o de solo comida/cena.
 
-Actualmente hay documentación, no una aplicación ejecutable. No afirmes que existen scripts o pruebas hasta comprobarlos. Mantén la documentación sincronizada con cada entrega.
+Existe una base React ejecutable con acceso Google y pruebas. Las casas y las funciones de planificación todavía están pendientes. Comprueba los scripts de package.json y mantén la documentación sincronizada con cada entrega.
 
 ## Forma de trabajar
 
