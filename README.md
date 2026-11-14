@@ -30,3 +30,12 @@ Tanto el registro como el inicio de sesión se harán con **Google** mediante Su
 ## Perfil y apariencia
 
 El nombre del usuario y su avatar aparecerán en la esquina superior derecha. Al pulsar el avatar se abrirá el perfil, donde cada usuario podrá elegir un **emoji como avatar**, cambiar entre **modo claro y oscuro** y seleccionar un tema de color. Los temas disponibles serán **blanco, azul, rojo, rosa, verde y amarillo**, cada uno con su variante clara y oscura.
+
+## Documentación y desarrollo
+
+- [Especificación funcional, arquitectura y fases](docs/ESPECIFICACION.md).
+- [Instrucciones para agentes](AGENTS.md).
+
+La base técnica prevista es React con TypeScript, Vite y Tailwind CSS en Cloudflare Pages, con Supabase para autenticación, datos, fotos privadas y sincronización. La interfaz será móvil y estará en español.
+
+El repositorio está en fase de definición: todavía no contiene la aplicación, dependencias, migraciones ni pruebas ejecutables. Los comandos de instalación, desarrollo y validación se documentarán cuando se implemente la base técnica y se hayan comprobado. No se necesitan credenciales para trabajar en esta documentación.
