@@ -43,13 +43,13 @@ export default function Household({ userId, online }: { userId: string; online: 
   finally{setBusy(false);}
  }
  if(loading)return <p role="status">Cargando casa…</p>;
- return <section aria-label="Casa">
+ return <section className="household" aria-label="Casa">
   {error&&<p role="alert">{error} <button onClick={()=>setRetry(x=>x+1)}>Reintentar</button></p>}
   {house?<><h2>{house.name}</h2>{token&&<p>Ya perteneces a una casa. No puedes aceptar otra invitación.</p>}
    {house.owner_id===userId&&<><button disabled={busy||!online} onClick={()=>void action('invite')}>Crear enlace de invitación</button>
     {link&&<label>Enlace válido durante 7 días<input readOnly value={link} onFocus={e=>e.target.select()}/></label>}
-    <ul>{invites.filter(i=>!i.revoked_at&&new Date(i.expires_at)>new Date()).map(i=><li key={i.id}>Invitación hasta {new Date(i.expires_at).toLocaleDateString('es')} <button disabled={busy||!online} onClick={()=>void action('revoke',i.id)}>Revocar</button></li>)}</ul>
+    <ul className="invites">{invites.filter(i=>!i.revoked_at&&new Date(i.expires_at)>new Date()).map(i=><li key={i.id}>Invitación hasta {new Date(i.expires_at).toLocaleDateString('es')} <button className="secondary" disabled={busy||!online} onClick={()=>void action('revoke',i.id)}>Revocar</button></li>)}</ul>
    </>}
-  </>:<>{token?<><h2>Unirte a una casa</h2><button disabled={busy||!online} onClick={()=>void action('accept')}>Aceptar invitación</button><button disabled={busy} onClick={()=>{sessionStorage.removeItem('home-menu-invitation');setToken('');}}>Descartar invitación</button></>:<form onSubmit={e=>{e.preventDefault();void action('create');}}><h2>Crear casa</h2><label>Nombre<input value={name} onChange={e=>setName(e.target.value)} required maxLength={80}/></label><button disabled={busy||!online||!name.trim()}>Crear casa</button></form>}</>}
+  </>:<>{token?<><h2>Unirte a una casa</h2><button disabled={busy||!online} onClick={()=>void action('accept')}>Aceptar invitación</button><button className="secondary" disabled={busy} onClick={()=>{sessionStorage.removeItem('home-menu-invitation');setToken('');}}>Descartar invitación</button></>:<form onSubmit={e=>{e.preventDefault();void action('create');}}><h2>Crear casa</h2><label>Nombre<input value={name} onChange={e=>setName(e.target.value)} required maxLength={80}/></label><button disabled={busy||!online||!name.trim()}>Crear casa</button></form>}</>}
  </section>;
 }
