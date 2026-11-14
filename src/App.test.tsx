@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const auth = vi.hoisted(() => ({ getSession: vi.fn(), onAuthStateChange: vi.fn(), signInWithOAuth: vi.fn(), signOut: vi.fn() }));
 vi.mock('./supabase', () => ({ supabase: { auth } }));
+vi.mock('./Household', () => ({ default: () => null }));
 import App from './App';
 beforeEach(() => {
   Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });

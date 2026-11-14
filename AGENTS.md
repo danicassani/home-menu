@@ -14,6 +14,10 @@ Existe una base React ejecutable con acceso Google y pruebas. Las casas y las fu
 - Entrega bloques pequeños y completos con sus comprobaciones. Sigue las fases de la especificación cuando la tarea no determine otra prioridad.
 - No despliegues, publiques ni modifiques producción sin petición explícita. Crear una migración local no autoriza aplicarla en producción.
 
+## Diseño
+
+- Interfaz minimalista, sin decoración ni textos promocionales. Único eslogan permitido: «Olvida el 'qué comemos'». Usa etiquetas y mensajes breves.
+
 ## Implementación
 
 - React, TypeScript estricto, Vite y Tailwind; Cloudflare Pages y Supabase. Prefiere herramientas y scripts ya presentes; utiliza el lockfile y no mezcles gestores.
