@@ -2,7 +2,7 @@
 
 ## Estado y objetivo
 
-Documento para implementar una PWA móvil en español que permita a varios hogares independientes compartir platos, planificar la semana y comprar sus ingredientes. Actualmente existe una base React con portada, acceso Google, sesión y pruebas de cliente. Existen creación de casas e invitaciones caducables/revocables. Queda pendiente la gestión de salida, expulsión y propiedad; la fase 1 aún no está completa.
+Documento para implementar una PWA móvil en español que permita a varios hogares independientes compartir platos, planificar la semana y comprar sus ingredientes. Actualmente existe una base React con portada, acceso Google, sesión y pruebas de cliente. Existen creación de casas e invitaciones caducables/revocables y una carta de platos con catálogo, alternativas, fotos privadas y archivo/restauración. Queda pendiente la gestión de salida, expulsión y propiedad; la fase 1 aún no está completa.
 
 El README actualizado desde `main` es la referencia funcional más reciente. Sustituye estas decisiones de la conversación inicial: el menú incluye desayuno, la compra muestra nombres sin cantidades y la primera versión incorpora alternativas, kilocalorías opcionales y personalización visual. No se debe implementar la suma de cantidades del plan anterior.
 
