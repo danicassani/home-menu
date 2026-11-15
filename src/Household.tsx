@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
 import RecipeBook from './RecipeBook';
+import WeeklyMenu from './WeeklyMenu';
 type House = { id: string; name: string; owner_id: string };
 type Invitation = { id: string; expires_at: string; revoked_at: string | null };
 export default function Household({ userId, online }: { userId: string; online: boolean }) {
- const [tab,setTab]=useState<'recipes'|'house'>('recipes');
+ const [tab,setTab]=useState<'recipes'|'week'|'house'>('recipes');
  const [house,setHouse]=useState<House|null>(null);
  const [invites,setInvites]=useState<Invitation[]>([]);
  const [name,setName]=useState(''); const [loading,setLoading]=useState(true);
@@ -47,7 +48,7 @@ export default function Household({ userId, online }: { userId: string; online: 
  if(loading)return <p role="status">Cargando casa…</p>;
  return <section className="household" aria-label="Casa">
   {error&&<p role="alert">{error} <button onClick={()=>setRetry(x=>x+1)}>Reintentar</button></p>}
-  {house?<><nav className="house-tabs" aria-label="Secciones"><button className={tab==='recipes'?'':'secondary'} aria-pressed={tab==='recipes'} onClick={()=>setTab('recipes')}>Carta</button><button className={tab==='house'?'':'secondary'} aria-pressed={tab==='house'} onClick={()=>setTab('house')}>Casa</button></nav>{tab==='recipes'?<RecipeBook key={house.id} houseId={house.id} online={online}/>:<><h2>{house.name}</h2>{token&&<p>Ya perteneces a una casa. No puedes aceptar otra invitación.</p>}
+  {house?<><nav className="house-tabs" aria-label="Secciones"><button className={tab==='recipes'?'':'secondary'} aria-pressed={tab==='recipes'} onClick={()=>setTab('recipes')}>Carta</button><button className={tab==='week'?'':'secondary'} aria-pressed={tab==='week'} onClick={()=>setTab('week')}>Semana</button><button className={tab==='house'?'':'secondary'} aria-pressed={tab==='house'} onClick={()=>setTab('house')}>Casa</button></nav>{tab==='recipes'?<RecipeBook key={house.id} houseId={house.id} online={online}/>:tab==='week'?<WeeklyMenu key={house.id} houseId={house.id} online={online}/>:<><h2>{house.name}</h2>{token&&<p>Ya perteneces a una casa. No puedes aceptar otra invitación.</p>}
    {house.owner_id===userId&&<><button disabled={busy||!online} onClick={()=>void action('invite')}>Crear enlace de invitación</button>
     {link&&<label>Enlace válido durante 7 días<input readOnly value={link} onFocus={e=>e.target.select()}/></label>}
     <ul className="invites">{invites.filter(i=>!i.revoked_at&&new Date(i.expires_at)>new Date()).map(i=><li key={i.id}>Invitación hasta {new Date(i.expires_at).toLocaleDateString('es')} <button className="secondary" disabled={busy||!online} onClick={()=>void action('revoke',i.id)}>Revocar</button></li>)}</ul>

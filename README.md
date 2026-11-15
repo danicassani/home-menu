@@ -38,7 +38,7 @@ El nombre del usuario y su avatar aparecerán en la esquina superior derecha. Al
 
 La base técnica prevista es React con TypeScript, Vite y Tailwind CSS en Cloudflare Pages, con Supabase para autenticación, datos, fotos privadas y sincronización. La interfaz será móvil y estará en español.
 
-El repositorio incluye acceso, casas, invitaciones y carta de platos. La planificación y la compra siguen pendientes. Consulta los comandos y limitaciones más abajo.
+El repositorio incluye acceso, casas, invitaciones y carta de platos. El menú semanal también está implementado; la compra sigue pendiente. Consulta los comandos y limitaciones más abajo.
 
 ## Ejecutar la base de la aplicación
 
@@ -63,7 +63,7 @@ npm run preview
 
 Cloudflare Pages: comando de build `npm run build`, directorio de salida `dist`, Node.js 22 o posterior y las dos variables públicas configuradas antes de compilar. `public/_redirects` permite rutas de SPA. Esta entrega no despliega automáticamente.
 
-**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. Pendientes: transferencias, expulsiones, salida/eliminación de casas, menú, compra y PWA. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
+**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. Pendientes: transferencias, expulsiones, salida/eliminación de casas, compra y PWA. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
 
 Antes de desplegar esta entrega, aplica `supabase/migrations/202611140001_households.sql` una sola vez en el SQL Editor de Supabase. No contiene datos de ejemplo. Activa RLS y limita las escrituras a funciones transaccionales. No se ha aplicado automáticamente. Las pruebas SQL se ejecutan contra PostgreSQL local embebido (PGlite) con roles Auth simulados, sin conectarse a producción. Las pruebas de interfaz simulan el cliente Supabase.
 
@@ -89,3 +89,16 @@ npm run test:e2e
 ```
 
 Playwright inicia un servidor aislado con respuestas HTTP simuladas, sin credenciales reales. Comprueba creación, edición, alternativas, catálogo, archivo y fotos en tamaños móvil y escritorio. Para usar Chromium ya instalado, define `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` con su ruta. Vitest comprueba componentes y las migraciones en PostgreSQL embebido (PGlite); las pruebas de Storage modelan sus tablas y políticas, sin ejecutar el servicio remoto. La aplicación de migraciones y la validación de Storage en el proyecto real son pasos separados.
+
+
+## Menú semanal
+
+La pestaña Semana organiza de lunes a domingo los desayunos, comidas y cenas. Cada turno admite varios platos, incluso repetidos. Añadir y Sustituir abren la carta; el filtro empieza en el turno elegido y puede cambiarse a Todas. Quitar afecta solo a esa aparición.
+
+En Ingredientes se eligen las alternativas de cada plato planificado sin cambiar la receta ni otras apariciones. Si una edición elimina una alternativa elegida, se vuelve al ingrediente original y se muestra un aviso para revisar la receta. Las recetas archivadas siguen visibles en menús existentes, pero no se ofrecen para añadir o sustituir.
+
+Las flechas y el selector de fecha cambian de semana. Copiar desde replica platos y alternativas en la semana visible; requiere confirmación si ya contiene platos. Las copias son independientes y no incluyen datos de compra. Las fechas son días de calendario, sin conversión a UTC.
+
+**Nueva migración:** ejecutar una sola vez `supabase/migrations/202611150002_weekly_menu.sql`, después de las dos anteriores, antes de desplegar este bloque. No volver a ejecutar las migraciones ya aplicadas. Añade las semanas, apariciones, alternativas y políticas RLS, y amplía `save_recipe` manteniendo su contrato. Su implementación auxiliar queda privada. Los cambios de recetas y menús se serializan por casa y las revisiones impiden sobrescribir cambios recientes; en caso de conflicto, usar Actualizar semana.
+
+La semana se recarga al volver a la pestaña del navegador o pulsar Actualizar semana. Realtime, compra y trabajo offline siguen pendientes. No se han aplicado migraciones ni probado el proyecto Supabase remoto. Las pruebas locales cubren aislamiento, validación de alternativas, revisiones, archivo, copia, cambios de mes/año y fechas cercanas a cambios de hora; los recorridos de navegador usan HTTP simulado.
