@@ -38,7 +38,7 @@ El nombre del usuario y su avatar aparecerán en la esquina superior derecha. Al
 
 La base técnica prevista es React con TypeScript, Vite y Tailwind CSS en Cloudflare Pages, con Supabase para autenticación, datos, fotos privadas y sincronización. La interfaz será móvil y estará en español.
 
-El repositorio contiene una base ejecutable de acceso; la gestión de hogares y las funciones de planificación siguen pendientes. Consulta los comandos y limitaciones más abajo.
+El repositorio incluye acceso, casas, invitaciones y carta de platos. La planificación y la compra siguen pendientes. Consulta los comandos y limitaciones más abajo.
 
 ## Ejecutar la base de la aplicación
 
@@ -63,6 +63,29 @@ npm run preview
 
 Cloudflare Pages: comando de build `npm run build`, directorio de salida `dist`, Node.js 22 o posterior y las dos variables públicas configuradas antes de compilar. `public/_redirects` permite rutas de SPA. Esta entrega no despliega automáticamente.
 
-**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. Pendientes: transferencias, expulsiones, salida/eliminación de casas, carta, menú, compra y PWA. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
+**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. Pendientes: transferencias, expulsiones, salida/eliminación de casas, menú, compra y PWA. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
 
 Antes de desplegar esta entrega, aplica `supabase/migrations/202611140001_households.sql` una sola vez en el SQL Editor de Supabase. No contiene datos de ejemplo. Activa RLS y limita las escrituras a funciones transaccionales. No se ha aplicado automáticamente. Las pruebas SQL se ejecutan contra PostgreSQL local embebido (PGlite) con roles Auth simulados, sin conectarse a producción. Las pruebas de interfaz simulan el cliente Supabase.
+
+
+## Carta de platos
+
+La sección Carta permite crear y editar platos, filtrar por nombre y categoría, consultar la ficha y archivar/restaurar. El selector + reutiliza ingredientes del hogar y permite crearlos con kcal opcionales. Cada ingrediente admite alternativas del mismo catálogo. Las elecciones por día se incorporarán con la planificación semanal.
+
+Las fotos son opcionales, privadas y de hasta 5 MB (JPEG, PNG o WebP). Se muestran mediante enlaces firmados de una hora; Actualizar renueva los enlaces. Editar una versión antigua de un plato falla conservando el borrador, para evitar sobrescribir cambios de otro miembro.
+
+**Migraciones:** aplicar una sola vez, en este orden:
+
+1. `supabase/migrations/202611140001_households.sql`, si todavía no se aplicó.
+2. `supabase/migrations/202611150001_recipes.sql`, antes de desplegar la carta.
+
+La segunda migración crea el catálogo, las recetas, alternativas y el bucket privado `recipe-photos` con políticas por casa. No requiere nuevas variables ni cambios en Google OAuth. No borra recetas al archivarlas. Las fotos reemplazadas, retiradas o subidas durante un guardado fallido se conservan en Storage; su limpieza automática queda pendiente. No se eliminan al fallar un guardado porque la respuesta podría haberse perdido después de confirmarse la transacción.
+
+**Pruebas de navegador:**
+
+```sh
+npx playwright install chromium
+npm run test:e2e
+```
+
+Playwright inicia un servidor aislado con respuestas HTTP simuladas, sin credenciales reales. Comprueba creación, edición, alternativas, catálogo, archivo y fotos en tamaños móvil y escritorio. Para usar Chromium ya instalado, define `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` con su ruta. Vitest comprueba componentes y las migraciones en PostgreSQL embebido (PGlite); las pruebas de Storage modelan sus tablas y políticas, sin ejecutar el servicio remoto. La aplicación de migraciones y la validación de Storage en el proyecto real son pasos separados.
