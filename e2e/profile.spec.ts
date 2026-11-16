@@ -21,20 +21,31 @@ test('guarda avatar y apariencia y los recupera tras recargar',async({page},test
 });
 
 test('previsualiza doce combinaciones y Escape cancela y devuelve el foco',async({page})=>{
+ await page.emulateMedia({colorScheme:'light',reducedMotion:'no-preference'});
  await setupApp(page);const trigger=page.getByRole('button',{name:'Abrir perfil de Alex'});await trigger.click();
- const dialog=page.getByRole('dialog',{name:'Perfil'});
- for(const mode of ['light','dark']){
-  const backgrounds=new Set<string>();
-  await dialog.getByRole('switch',{name:'Modo oscuro'}).setChecked(mode==='dark');
-  for(const [value,label] of [['white','Blanco'],['blue','Azul'],['red','Rojo'],['pink','Rosa'],['green','Verde'],['yellow','Amarillo']]){
-   await dialog.getByRole('radio',{name:label,exact:true}).check();
-   await expect(page.locator('html')).toHaveAttribute('data-theme',value);await expect(page.locator('html')).toHaveAttribute('data-mode',mode);
-   backgrounds.add(await dialog.getByRole('button',{name:'Guardar perfil'}).evaluate(el=>getComputedStyle(el).backgroundColor));
+ const dialog=page.getByRole('dialog',{name:'Perfil'}),save=dialog.getByRole('button',{name:'Guardar perfil'});
+ const cases=[
+  {value:'white',label:'Blanco',light:'rgb(46, 81, 69)',dark:'rgb(177, 212, 188)'},
+  {value:'blue',label:'Azul',light:'rgb(36, 87, 166)',dark:'rgb(168, 199, 255)'},
+  {value:'red',label:'Rojo',light:'rgb(150, 59, 52)',dark:'rgb(255, 181, 172)'},
+  {value:'pink',label:'Rosa',light:'rgb(145, 62, 108)',dark:'rgb(245, 182, 215)'},
+  {value:'green',label:'Verde',light:'rgb(46, 100, 69)',dark:'rgb(164, 221, 177)'},
+  {value:'yellow',label:'Amarillo',light:'rgb(120, 87, 0)',dark:'rgb(235, 208, 113)'},
+ ];
+ for(const mode of ['light','dark'] as const){
+  const backgrounds=new Set<string>();await dialog.getByRole('switch',{name:'Modo oscuro'}).setChecked(mode==='dark');
+  for(const theme of cases){
+   await dialog.getByRole('radio',{name:theme.label,exact:true}).check();
+   await expect(page.locator('html')).toHaveAttribute('data-theme',theme.value);await expect(page.locator('html')).toHaveAttribute('data-mode',mode);
+   // The data attribute changes before the button's CSS transition finishes.
+   await expect(save).toHaveCSS('background-color',theme[mode]);
+   backgrounds.add(await save.evaluate(element=>getComputedStyle(element).backgroundColor));
   }
   expect(backgrounds.size).toBe(6);
  }
  await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible();await expect(trigger).toBeFocused();
- await expect(page.locator('html')).toHaveAttribute('data-theme','white');
+ await expect(page.locator('html')).toHaveAttribute('data-theme','white');await expect(page.locator('html')).toHaveAttribute('data-mode','light');
+ await expect(page.locator('.brand-mark')).toHaveCSS('background-color','rgb(46, 81, 69)');
 });
 
 test('respeta el sistema, permite fijar el modo y limpia preferencias al cerrar sesión',async({page})=>{

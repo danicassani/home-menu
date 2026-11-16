@@ -2,6 +2,9 @@ import { test, expect } from '@playwright/test';
 import { setupApp } from './fixtures';
 test('navega con iconos en la barra fija y deja libres los controles inferiores',async({page},testInfo)=>{
  await setupApp(page);
+ await expect(page.locator('header')).toHaveCSS('border-bottom-width','0px');
+ await expect(page.locator('.surface')).toHaveCount(0);
+ await expect(page.locator('main')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
  const nav=page.getByRole('navigation',{name:'Secciones'});
  await expect(nav.getByRole('button')).toHaveCount(4);
  await expect(nav.getByRole('button',{name:'Carta',exact:true})).toHaveAttribute('aria-pressed','true');

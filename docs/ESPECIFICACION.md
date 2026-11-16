@@ -8,7 +8,7 @@ El README actualizado desde `main` es la referencia funcional más reciente. Sus
 
 ## Experiencia de usuario
 
-Interfaz estética, sencilla, accesible y pensada para móviles: tarjetas, color y buena jerarquía visual, sin textos de relleno. Único eslogan: «Olvida el 'qué comemos'». Navegación principal entre Carta, Semana, Compra y Casa mediante una barra inferior fija con iconos sin texto visible (plato con tenedor/cuchillo, calendario, carrito y casa). Conservar nombres accesibles, foco de teclado y marca de selección; respetar áreas seguras y no tapar los controles finales. Mostrar estados de carga, vacío, error y conexión sin ocultar fallos de sincronización. Controles cómodos al cocinar y comprar, etiquetas accesibles y foco visible; no comunicar estados solo mediante color.
+Interfaz estética, sencilla, accesible y pensada para móviles: tarjetas, color y buena jerarquía visual, sin textos de relleno. Contenido directamente sobre el fondo, sin tarjeta exterior ni separador bajo la cabecera; conservar las tarjetas de platos y días. Único eslogan: «Olvida el 'qué comemos'». Navegación principal entre Carta, Semana, Compra y Casa mediante una barra inferior fija con iconos sin texto visible (plato con tenedor/cuchillo, calendario, carrito y casa). Conservar nombres accesibles, foco de teclado y marca de selección; respetar áreas seguras y no tapar los controles finales. Mostrar estados de carga, vacío, error y conexión sin ocultar fallos de sincronización. Controles cómodos al cocinar y comprar, etiquetas accesibles y foco visible; no comunicar estados solo mediante color.
 
 ### Acceso y casas
 
@@ -79,6 +79,7 @@ Los envíos usan `apply_shopping_mark` con UUID persistente y recibos privados. 
 
 
 - PWA instalable en Android y iPhone, con manifest e iconos adecuados.
+- Actualizaciones mediante diálogo automático con Actualizar app y Más tarde (también Escape), sin botón al pie. Esperar a que terminen otros diálogos. Solo recargar al aceptar; posponer conserva el borrador y no repite el aviso de esa versión durante la sesión.
 - Sin conexión: consultar los últimos datos disponibles y marcar o desmarcar compras. Crear o editar platos, menú, perfil y hogar requiere conexión.
 - Guardar marcas pendientes localmente e indicar su estado. Sincronizarlas al reconectar con operaciones idempotentes.
 - Asociar cada marca a la generación vigente del producto semanal: rechazar marcas de un producto eliminado y añadido de nuevo. Ante escrituras concurrentes válidas, prevalece la última aceptada por el servidor.

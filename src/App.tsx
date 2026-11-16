@@ -71,7 +71,6 @@ export default function App() {
     <a href="#contenido" className="skip-link">Saltar al contenido</a>
     <header><a href="/" className="brand"><span className="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M4 11a8 8 0 0 1 16 0M3 15h18M6 19h12M12 3V1" strokeLinecap="round"/></svg></span>Home Menu</a>{account && <AccountProfile key={account.id} user={account} online={online&&Boolean(session)} onSignOut={signOut}/>}</header>
     <main id="contenido" className={account ? 'workspace' : 'login'}>
-      <div className="surface">
       {!account && <><div className="login-mark" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="24" cy="24" r="14"/><circle cx="24" cy="24" r="9"/><path d="M4 9v9m4-9v9m-4-3h4m-2 3v21M42 9c-4 5-4 12 0 14v16m0-30v14" strokeLinecap="round"/></svg></div><h1>Olvida el <span>'qué comemos'</span></h1></>}
       {!online && <p role="status">Sin conexión.</p>}
       {error && <p role="alert">{error}</p>}
@@ -80,7 +79,6 @@ export default function App() {
         <Household key={account.id} userId={account.id} online={online&&Boolean(session)}/>
       </> : <button onClick={() => void signIn()} disabled={!supabase || busy || !online}>{busy ? 'Conectando…' : 'Continuar con Google'}</button>}
       {!supabase && <p role="status">Falta conectar este entorno con Supabase.</p>}
-      </div>
     </main>
     <InstallApp/>
   </div>;
