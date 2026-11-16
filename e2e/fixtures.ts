@@ -3,6 +3,9 @@ import type { MenuWeek } from '../src/menu';
 import type { ShoppingItem } from '../src/shopping';
 
 export function createFixtureState() {
+ const house={id:'00000000-0000-0000-0000-000000000010',name:'Casa de prueba',owner_id:'00000000-0000-0000-0000-000000000001',deletion_requested_at:null as string|null,deleted:false};
+ const members=[{user_id:house.owner_id,display_name:'Alex'},{user_id:'00000000-0000-0000-0000-000000000002',display_name:'Sam'}];
+ const files=new Set<string>();
  const ingredients=[{id:'00000000-0000-0000-0000-000000000021',name:'Pollo',kcal_per_100g:null},{id:'00000000-0000-0000-0000-000000000022',name:'Tofu',kcal_per_100g:80}];
  type Dish={id:string;name:string;description:string;instructions:string;categories:string[];photo_path:string|null;revision:number;archived:boolean};
  const recipes:Dish[]=[{id:'00000000-0000-0000-0000-000000000030',name:'Pollo al horno',description:'Con verduras',instructions:'Hornear 30 minutos.',categories:['lunch'],photo_path:null,revision:1,archived:false}];
@@ -20,7 +23,7 @@ export function createFixtureState() {
   for(const id of required)if(!items.some(i=>i.ingredient_id===id))items.push({id:crypto.randomUUID(),ingredient_id:id,name:ingredients.find(i=>i.id===id)!.name,from_menu:true,manual:false,purchased:false});
   items.sort((a,b)=>a.name.localeCompare(b.name,'es'));shopping.set(day,items);return items;
  }
- return {ingredients,recipes,lines,alternatives,weeks,week,shopping,reconcile,notifiers:new Set<()=>void>(),revision:0};
+ return {house,members,files,userNotifiers:new Set<()=>void>(),ingredients,recipes,lines,alternatives,weeks,week,shopping,reconcile,notifiers:new Set<()=>void>(),revision:0};
 }
 
 // Auth y HTTP simulados; sin credenciales ni acceso a Supabase remoto.
@@ -32,24 +35,25 @@ export async function setupApp(page:Page,state=createFixtureState(),userId='0000
  await page.addInitScript(data=>localStorage.setItem('sb-fixture-auth-token',JSON.stringify(data)),session);
  const {ingredients,recipes,lines,alternatives,week,shopping,reconcile}=state;
  await page.routeWebSocket('wss://fixture.supabase.co/realtime/v1/**',ws=>{
-  let notify:(()=>void)|undefined;
+  let notifyHouse:(()=>void)|undefined,notifyUser:(()=>void)|undefined;
   ws.onMessage(raw=>{
-   const frame=JSON.parse(typeof raw==='string'?raw:raw.toString());
-   const [join,ref,topic,event,payload]=frame;
-   if(event==='phx_join') {
-    const filters=payload.config.postgres_changes.map((filter:Record<string,unknown>,i:number)=>({...filter,id:i+1}));
+   const [join,ref,topic,event,payload]=JSON.parse(typeof raw==='string'?raw:raw.toString());
+   if(event==='phx_join'){
+    const filters=payload.config.postgres_changes.map((f:Record<string,unknown>,i:number)=>({...f,id:i+1}));
     ws.send(JSON.stringify([join,ref,topic,'phx_reply',{status:'ok',response:{postgres_changes:filters}}]));
-    notify=()=>{
-     const ids=filters.filter((f:Record<string,unknown>)=>f.event==='UPDATE'&&f.filter===`household_id=eq.${houseId}`).map((f:Record<string,unknown>)=>f.id);
-     if(ids.length)ws.send(JSON.stringify([join,null,topic,'postgres_changes',{ids,data:{schema:'public',table:'household_changes',type:'UPDATE',commit_timestamp:new Date().toISOString(),columns:[{name:'household_id',type:'uuid'},{name:'revision',type:'int8'}],record:{household_id:houseId,revision:state.revision},old_record:{},errors:[]}}]));
+    const send=(table:string,filter:string,record:Record<string,unknown>)=>{
+     const ids=filters.filter((f:Record<string,unknown>)=>f.event==='UPDATE'&&f.table===table&&f.filter===filter).map((f:Record<string,unknown>)=>f.id);
+     if(ids.length)ws.send(JSON.stringify([join,null,topic,'postgres_changes',{ids,data:{schema:'public',table,type:'UPDATE',commit_timestamp:new Date().toISOString(),columns:Object.keys(record).map(name=>({name,type:name==='revision'?'int8':'uuid'})),record,old_record:{},errors:[]}}]));
     };
-    state.notifiers.add(notify);
-   }else if(event==='heartbeat'||event==='phx_leave') {
+    notifyHouse=()=>{if(state.members.some(m=>m.user_id===userId)&&!state.house.deleted&&!state.house.deletion_requested_at)send('household_changes',`household_id=eq.${houseId}`,{household_id:houseId,revision:state.revision});};
+    notifyUser=()=>send('user_household_changes',`user_id=eq.${userId}`,{user_id:userId,revision:state.revision});
+    state.notifiers.add(notifyHouse);state.userNotifiers.add(notifyUser);
+   }else if(event==='heartbeat'||event==='phx_leave'){
     ws.send(JSON.stringify([join,ref,topic,'phx_reply',{status:'ok',response:{}}]));
-    if(event==='phx_leave'&&notify)state.notifiers.delete(notify);
+    if(event==='phx_leave'){if(notifyHouse)state.notifiers.delete(notifyHouse);if(notifyUser)state.userNotifiers.delete(notifyUser);}
    }
   });
-  ws.onClose(()=>{if(notify)state.notifiers.delete(notify);});
+  ws.onClose(()=>{if(notifyHouse)state.notifiers.delete(notifyHouse);if(notifyUser)state.userNotifiers.delete(notifyUser);});
  });
  await page.route('https://fixture.supabase.co/**' ,async route=>{
   const url=new URL(route.request().url());
@@ -58,12 +62,35 @@ export async function setupApp(page:Page,state=createFixtureState(),userId='0000
    await route.fulfill({status:200,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')});return;
   }
   let body:unknown=[];
-  if(url.pathname==='/storage/v1/object/sign/recipe-photos') {
+  if(url.pathname==='/storage/v1/object/list/recipe-photos'){
+   const data=route.request().postDataJSON();const found=new Map<string,{id:string|null;name:string}>();
+   for(const path of state.files)if(path.startsWith(data.prefix+'/')){
+    const rest=path.slice(data.prefix.length+1).split('/');found.set(rest[0],{id:rest.length>1?null:path,name:rest[0]});
+   }
+   body=[...found.values()].sort((a,b)=>a.name.localeCompare(b.name)).slice(data.offset||0,(data.offset||0)+(data.limit||100));
+  }else if(url.pathname==='/storage/v1/object/recipe-photos'&&route.request().method()==='DELETE'){
+   for(const path of route.request().postDataJSON().prefixes)state.files.delete(path);body=[];
+  }else if(url.pathname==='/storage/v1/object/sign/recipe-photos') {
    body=route.request().postDataJSON().paths.map((path:string)=>({path,signedURL:'/object/sign/recipe-photos/'+path+'?token=test',error:null}));
   }else if(url.pathname.startsWith('/storage/v1/object/recipe-photos/')) {
+   state.files.add(url.pathname.split('/recipe-photos/')[1]);
    body={Key:'recipe-photos/'+url.pathname.split('/recipe-photos/')[1]};
   }else if(url.pathname==='/auth/v1/user')body=user;
-  else if(name==='households')body=[{id:houseId,name:'Casa de prueba',owner_id:'00000000-0000-0000-0000-000000000001'}];
+  else if(name==='households')body=state.members.some(m=>m.user_id===userId)&&!state.house.deleted&&(!state.house.deletion_requested_at||state.house.owner_id===userId)?[state.house]:[];
+  else if(name==='get_household_members')body=state.members.map(m=>({...m,is_owner:m.user_id===state.house.owner_id}));
+  else if(name==='remove_household_member'||name==='transfer_household'||name==='leave_household'){
+   const data=route.request().postDataJSON()||{};
+   if(name==='leave_household')state.members.splice(state.members.findIndex(m=>m.user_id===userId),1);
+   else if(name==='remove_household_member')state.members.splice(state.members.findIndex(m=>m.user_id===data.p_user),1);
+   else state.house.owner_id=data.p_user;
+   body=null;
+  }else if(name==='begin_household_deletion'){
+   state.house.deletion_requested_at ||= new Date().toISOString();
+   state.members.splice(0,state.members.length,...state.members.filter(m=>m.user_id===state.house.owner_id));body=null;
+  }else if(name==='finish_household_deletion'){
+   if(state.files.size){await route.fulfill({status:400,json:{message:'Faltan fotos'}});return;}
+   state.house.deleted=true;state.members.length=0;recipes.length=0;ingredients.length=0;lines.length=0;alternatives.length=0;state.weeks.clear();shopping.clear();body=null;
+  }
   else if(name==='recipes')body=recipes;
   else if(name==='ingredients')body=ingredients;
   else if(name==='recipe_ingredients')body=lines;
@@ -125,10 +152,10 @@ export async function setupApp(page:Page,state=createFixtureState(),userId='0000
    const recipe=recipes.find(r=>r.id===data.p_id)!;recipe.archived=data.p_archived;recipe.revision++;
    body=null;
   }
-  const mutation=['create_ingredient','save_recipe','set_recipe_archived','change_menu_week','copy_menu_week','set_shopping_purchased','set_manual_shopping'].includes(name||'');
+  const mutation=['create_ingredient','save_recipe','set_recipe_archived','change_menu_week','copy_menu_week','set_shopping_purchased','set_manual_shopping','remove_household_member','transfer_household','leave_household','begin_household_deletion','finish_household_deletion'].includes(name||'');
   if(mutation)for(const day of new Set([...state.weeks.keys(),...shopping.keys()]))reconcile(day);
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
-  if(mutation){state.revision++;for(const notify of state.notifiers)notify();}
+  if(mutation){state.revision++;for(const notify of state.notifiers)notify();if(['remove_household_member','transfer_household','leave_household','begin_household_deletion','finish_household_deletion'].includes(name||''))for(const notify of state.userNotifiers)notify();}
  });
  await page.goto('/');
  await expect(page.getByRole('heading',{name:'Carta',exact:true})).toBeVisible();

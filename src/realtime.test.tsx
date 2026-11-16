@@ -43,3 +43,8 @@ it('aplaza la actualización mientras hay un borrador y aplica solo una al termi
  rerender(<HouseholdUpdates.Provider value={2}><Consumer paused={false}/></HouseholdUpdates.Provider>);
  expect(screen.getByText('1')).toBeInTheDocument();
 });
+it('mantiene avisos del usuario sin casa para recibir la pérdida de pertenencia',()=>{
+ const {unmount}=renderHook(()=>useHouseholdRealtime(null,true,'user'));
+ expect(mock.on).toHaveBeenCalledWith('postgres_changes',expect.objectContaining({table:'user_household_changes',filter:'user_id=eq.user'}),expect.any(Function));
+ expect(mock.on.mock.calls.every(call=>call[1].table==='user_household_changes')).toBe(true);unmount();
+});

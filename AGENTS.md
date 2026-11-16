@@ -4,7 +4,7 @@
 
 Lee README.md y docs/ESPECIFICACION.md antes de modificar comportamiento. El README obtenido de main incorpora requisitos posteriores al plan inicial: desayuno, alternativas, compra por nombres y perfil/temas. La especificación integra esos cambios; no recuperes reglas antiguas de cantidades o de solo comida/cena.
 
-Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, alternativas, fotos y archivo. Existe menú semanal con alternativas por aparición y copia entre semanas. Existe compra automática por semana con productos manuales, Comprados y sincronización Realtime por casa. La gestión avanzada de miembros, perfil y funcionamiento offline siguen pendientes. Comprueba los scripts de package.json y mantén la documentación sincronizada con cada entrega.
+Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, alternativas, fotos y archivo. Existe menú semanal con alternativas por aparición y copia entre semanas. Existe compra automática por semana con productos manuales, Comprados y sincronización Realtime por casa. Hay gestión de miembros, transferencia, salida y eliminación reanudable de casas. Perfil y funcionamiento offline siguen pendientes. Comprueba los scripts de package.json y mantén la documentación sincronizada con cada entrega.
 
 ## Forma de trabajar
 
@@ -28,7 +28,8 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 - No uses permisos de la interfaz como sustituto de autorización en el servidor.
 - No incluyas secretos ni datos privados en código, fixtures o registros. Usa ejemplos sin valores reales; nunca expongas claves administrativas en el cliente.
 - La compra se reconcilia en el servidor dentro de la transacción del menú/receta. Conserva las marcas mientras el producto siga siendo necesario; eliminarlo y reintroducirlo crea otra identidad y rechaza marcas antiguas.
-- Realtime publica únicamente el contador household_changes bajo RLS. Aplaza las recargas durante la edición y conserva la revisión original del borrador.
+- Realtime publica contadores household_changes y user_household_changes bajo RLS; los avisos personales permiten retirar vistas cuando se pierde pertenencia. Aplaza las recargas durante la edición y conserva la revisión original del borrador.
+- Eliminar una casa exige confirmar su nombre. Bloquea el acceso antes de limpiar fotos por Storage API y elimina los datos solo al terminar; permite reanudar. Nunca borres archivos modificando storage.objects mediante SQL.
 - Separa cachés privadas por usuario/casa; limpia cachés y pendientes al cerrar sesión o perder acceso. No des por sincronizada una operación solo por haberla guardado localmente.
 
 ## Comprobaciones y comunicación
