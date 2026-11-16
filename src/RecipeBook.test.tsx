@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 const api=vi.hoisted(()=>({loadRecipeBook:vi.fn(),saveRecipe:vi.fn(),archiveRecipe:vi.fn(),addIngredient:vi.fn(),uploadPhoto:vi.fn()}));
 vi.mock('./recipes',async importOriginal=>({...await importOriginal<typeof import('./recipes')>(),...api}));
 import RecipeBook from './RecipeBook';
+import { HouseholdUpdates } from './realtime';
 import type { Recipe } from './recipes';
 const ingredients=[{id:'chicken',name:'Pollo',kcal_per_100g:null},{id:'tofu',name:'Tofu',kcal_per_100g:80}];
 const recipe:Recipe={id:'dish',name:'Pollo al horno',description:'Con verduras',instructions:'Hornear 30 minutos.',categories:['lunch'],photo_path:null,revision:3,archived:false,lines:[{id:'line',ingredient_id:'chicken',alternatives:['tofu']}]};
@@ -71,4 +72,21 @@ it('permite reintentar un fallo de carga y desactiva edición offline',async()=>
  const alert=await screen.findByRole('alert');
  fireEvent.click(within(alert).getByRole('button',{name:'Reintentar'}));
  expect(await screen.findByRole('button',{name:'Nuevo plato'})).toBeDisabled();
+});
+
+it('una actualización recibida al abrir el editor no sustituye la revisión del borrador',async()=>{
+ let resolve!:(value:{recipes:Recipe[];ingredients:typeof ingredients;photoError:boolean})=>void;
+ const {rerender}=render(<HouseholdUpdates.Provider value={0}><RecipeBook houseId="house" online/></HouseholdUpdates.Provider>);
+ await screen.findByRole('button',{name:/Pollo al horno/});
+ api.loadRecipeBook.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+ rerender(<HouseholdUpdates.Provider value={1}><RecipeBook houseId="house" online/></HouseholdUpdates.Provider>);
+ fireEvent.click(screen.getByRole('button',{name:/Pollo al horno/}));
+ fireEvent.click(screen.getByRole('button',{name:'Editar plato'}));
+ fireEvent.change(screen.getByLabelText('Nombre del plato'),{target:{value:'Mi borrador'}});
+ await act(async()=>resolve({recipes:[{...recipe,revision:4,name:'Cambio ajeno'}],ingredients,photoError:false}));
+ api.saveRecipe.mockRejectedValue(new Error('stale'));
+ fireEvent.click(screen.getByRole('button',{name:'Guardar plato'}));
+ await screen.findByRole('alert');
+ expect(api.saveRecipe).toHaveBeenCalledWith(expect.objectContaining({revision:3}),expect.objectContaining({name:'Mi borrador'}));
+ expect(screen.getByLabelText('Nombre del plato')).toHaveValue('Mi borrador');
 });

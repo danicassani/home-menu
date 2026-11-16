@@ -38,7 +38,7 @@ El nombre del usuario y su avatar aparecerán en la esquina superior derecha. Al
 
 La base técnica prevista es React con TypeScript, Vite y Tailwind CSS en Cloudflare Pages, con Supabase para autenticación, datos, fotos privadas y sincronización. La interfaz será móvil y estará en español.
 
-El repositorio incluye acceso, casas, invitaciones y carta de platos. El menú semanal también está implementado; la compra sigue pendiente. Consulta los comandos y limitaciones más abajo.
+El repositorio incluye acceso, casas, invitaciones y carta de platos. También están implementados el menú semanal, la compra automática y la sincronización entre miembros. Consulta los comandos y limitaciones más abajo.
 
 ## Ejecutar la base de la aplicación
 
@@ -63,7 +63,7 @@ npm run preview
 
 Cloudflare Pages: comando de build `npm run build`, directorio de salida `dist`, Node.js 22 o posterior y las dos variables públicas configuradas antes de compilar. `public/_redirects` permite rutas de SPA. Esta entrega no despliega automáticamente.
 
-**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. Pendientes: transferencias, expulsiones, salida/eliminación de casas, compra y PWA. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
+**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. Pendientes: transferencias, expulsiones, salida/eliminación de casas, perfil/temas y PWA/offline. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
 
 Antes de desplegar esta entrega, aplica `supabase/migrations/202611140001_households.sql` una sola vez en el SQL Editor de Supabase. No contiene datos de ejemplo. Activa RLS y limita las escrituras a funciones transaccionales. No se ha aplicado automáticamente. Las pruebas SQL se ejecutan contra PostgreSQL local embebido (PGlite) con roles Auth simulados, sin conectarse a producción. Las pruebas de interfaz simulan el cliente Supabase.
 
@@ -101,4 +101,19 @@ Las flechas y el selector de fecha cambian de semana. Copiar desde replica plato
 
 **Nueva migración:** ejecutar una sola vez `supabase/migrations/202611150002_weekly_menu.sql`, después de las dos anteriores, antes de desplegar este bloque. No volver a ejecutar las migraciones ya aplicadas. Añade las semanas, apariciones, alternativas y políticas RLS, y amplía `save_recipe` manteniendo su contrato. Su implementación auxiliar queda privada. Los cambios de recetas y menús se serializan por casa y las revisiones impiden sobrescribir cambios recientes; en caso de conflicto, usar Actualizar semana.
 
-La semana se recarga al volver a la pestaña del navegador o pulsar Actualizar semana. Realtime, compra y trabajo offline siguen pendientes. No se han aplicado migraciones ni probado el proyecto Supabase remoto. Las pruebas locales cubren aislamiento, validación de alternativas, revisiones, archivo, copia, cambios de mes/año y fechas cercanas a cambios de hora; los recorridos de navegador usan HTTP simulado.
+La semana se recarga con los avisos Realtime, al volver a la pestaña del navegador o al pulsar Actualizar semana. El trabajo offline sigue pendiente. Las migraciones de esta entrega no se han aplicado ni probado en el proyecto Supabase remoto. Las pruebas locales cubren aislamiento, validación de alternativas, revisiones, archivo, copia, cambios de mes/año y fechas cercanas a cambios de hora; los recorridos de navegador usan HTTP simulado.
+
+
+## Compra automática y colaboración
+
+La pestaña Compra comparte la semana seleccionada con Semana. Genera una sola fila por ingrediente del catálogo, usando las alternativas elegidas para cada aparición del plato. No calcula ni muestra cantidades. Los cambios de menú y recetas reconcilian la compra dentro de la misma transacción.
+
+Marcar una casilla tacha el producto y lo mueve a Comprados; desmarcar lo devuelve a Pendientes. Añadir producto reutiliza el catálogo o permite crear uno. Si el producto ya viene del menú aparece una sola vez. Quitar su aportación manual no elimina una necesidad del menú. Los productos manuales no pasan a otras semanas ni se copian con el menú.
+
+Las marcas se conservan mientras el ingrediente siga siendo necesario. Si desaparece y se añade después, recibe una identidad nueva y empieza pendiente. Las marcas sobre una identidad eliminada se rechazan. Entre miembros, prevalece la última marca aceptada por el servidor. La copia de menús conserva los productos manuales del destino y no copia marcas del origen.
+
+**Migración nueva:** aplicar una sola vez `supabase/migrations/202611160001_shopping_realtime.sql`, después de las tres anteriores, antes de fusionar/desplegar. No repetir las anteriores si ya están aplicadas. Crea la compra, sus funciones y un contador privado `household_changes` por casa; incorpora ese contador a la publicación `supabase_realtime`. Inicializa la compra de los menús ya existentes. No necesita variables nuevas ni cambios OAuth.
+
+Realtime avisa de cambios en carta, menú, compra e invitaciones; cada cliente recarga los datos autorizados de su casa. No se envían recetas ni productos en el aviso. Los eventos se agrupan y las recargas se aplazan mientras se edita o guarda, sin sustituir el borrador ni su revisión. Se recupera el estado al suscribirse/reconectar. Si falla el canal, se actualiza cada 15 segundos; cada minuto se revalida el estado incluso con el canal activo. Al salir o cambiar de casa se retira la suscripción.
+
+Las pruebas SQL comprueban derivación, permisos, conservación de marcas, identidades nuevas, copias y publicación. Playwright usa el cliente Supabase real con HTTP y WebSocket simulados, incluyendo dos sesiones en contextos independientes. Esto no sustituye la comprobación del proyecto Supabase desplegado tras aplicar la migración. Sin conexión las escrituras siguen deshabilitadas: el almacenamiento offline se implementará en otra entrega.

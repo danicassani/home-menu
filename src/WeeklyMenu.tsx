@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { categories, filterRecipes, loadRecipeBook, type Category, type Ingredient, type Recipe } from './recipes';
 import { addDays, calendarDay, changeMenuWeek, copyMenuWeek, dayLabel, loadMenuWeek, monday, weekLabel, type MenuChange, type MenuWeek } from './menu';
-type Selection = { day:string; meal:Category; entry?:string };
-export default function WeeklyMenu({houseId,online}:{houseId:string;online:boolean}) {
-  const [week,setWeek]=useState(()=>monday(calendarDay(new Date())));
+import WeekNavigation from './WeekNavigation';
+import { useRealtimeRefresh } from './realtime';
+type Selection = { day:string; meal:Category; entry?:string; revision:number };
+export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{houseId:string;online:boolean;selectedWeek?:string;onWeekChange?:(week:string)=>void}) {
+  const [localWeek,setLocalWeek]=useState(()=>monday(calendarDay(new Date())));
+  const week=selectedWeek??localWeek;
+  const setWeek=onWeekChange??setLocalWeek;
   const [source,setSource]=useState(()=>addDays(monday(calendarDay(new Date())),-7));
   const [data,setData]=useState<MenuWeek>({revision:0,entries:[]});
   const [recipes,setRecipes]=useState<Recipe[]>([]);
@@ -15,12 +19,15 @@ export default function WeeklyMenu({houseId,online}:{houseId:string;online:boole
   const [selection,setSelection]=useState<Selection|null>(null);
   const [search,setSearch]=useState('');
   const [filter,setFilter]=useState('');
+  const generation=useRef(0),loaded=useRef('');
+  useRealtimeRefresh(busy||Boolean(selection),setRetry);
   useEffect(()=>{setSource(addDays(week,-7));},[week]);
   useEffect(()=>{
-    let active=true;setLoading(true);setError('');
+    let active=true;const ticket=++generation.current;const key=houseId+week;
+    if(loaded.current!==key)setLoading(true);setError('');
     void Promise.all([loadMenuWeek(week),loadRecipeBook(houseId)]).then(([menu,book])=>{
-      if(active){setData(menu);setRecipes(book.recipes);setIngredients(book.ingredients);}
-    }).catch(()=>{if(active){setData({revision:0,entries:[]});setRecipes([]);setIngredients([]);setError('No se ha podido cargar la semana.');}}).finally(()=>{if(active)setLoading(false);});
+      if(active&&ticket===generation.current){setData(menu);setRecipes(book.recipes);setIngredients(book.ingredients);loaded.current=key;}
+    }).catch(()=>{if(active&&ticket===generation.current){setData({revision:0,entries:[]});setRecipes([]);setIngredients([]);setError('No se ha podido cargar la semana.');}}).finally(()=>{if(active&&ticket===generation.current)setLoading(false);});
     return ()=>{active=false;};
   },[houseId,week,retry]);
   useEffect(()=>{
@@ -29,9 +36,9 @@ export default function WeeklyMenu({houseId,online}:{houseId:string;online:boole
   },[busy,selection]);
   const disabled=busy||loading||!online;
   const name=(id:string)=>ingredients.find(i=>i.id===id)?.name||'Ingrediente';
-  async function change(change:MenuChange) {
-    if(disabled)return;setBusy(true);setError('');
-    try{setData(await changeMenuWeek(week,data.revision,change));setSelection(null);}
+  async function change(change:MenuChange,expectedRevision=data.revision) {
+    if(disabled)return;generation.current++;setBusy(true);setError('');
+    try{setData(await changeMenuWeek(week,expectedRevision,change));setSelection(null);}
     catch{setError('No se ha podido guardar. Actualiza la semana y reintenta.');}
     finally{setBusy(false);}
   }
@@ -39,26 +46,21 @@ export default function WeeklyMenu({houseId,online}:{houseId:string;online:boole
     if(disabled||!source||source===week)return;
     const overwrite=data.entries.length>0;
     if(overwrite&&!window.confirm('¿Sustituir todos los platos de esta semana?'))return;
-    setBusy(true);setError('');
+    generation.current++;setBusy(true);setError('');
     try{setData(await copyMenuWeek(source,week,data.revision,overwrite));}
     catch{setError('No se ha podido copiar. Comprueba que la semana de origen tenga platos y actualiza.');}
     finally{setBusy(false);}
   }
-  function choose(day:string,meal:Category,entry?:string){setSelection({day,meal,entry});setSearch('');setFilter(meal);}
+  function choose(day:string,meal:Category,entry?:string){setSelection({day,meal,entry,revision:data.revision});setSearch('');setFilter(meal);}
   return <section className="weekly-menu" aria-label="Menú semanal">
     <div className="section-heading"><h2>Semana</h2><button className="secondary compact" disabled={busy||loading} onClick={()=>{setSelection(null);setRetry(n=>n+1);}}>Actualizar semana</button></div>
-    <div className="week-navigation">
-      <button className="secondary compact" aria-label="Semana anterior" disabled={busy||loading||Boolean(selection)} onClick={()=>setWeek(addDays(week,-7))}>←</button>
-      <label>Semana del<input type="date" value={week} disabled={busy||loading||Boolean(selection)} onChange={e=>{if(e.target.value)setWeek(monday(e.target.value));}}/></label>
-      <button className="secondary compact" aria-label="Semana siguiente" disabled={busy||loading||Boolean(selection)} onClick={()=>setWeek(addDays(week,7))}>→</button>
-    </div>
-    <p className="week-range">{weekLabel(week)}</p>
+    <WeekNavigation week={week} disabled={busy||loading||Boolean(selection)} onChange={setWeek}/>
     {error&&<p role="alert">{error}</p>}
     {loading?<p role="status">Cargando semana…</p>:selection?<section className="menu-picker" aria-label="Elegir plato">
       <div className="section-heading"><h3>{selection.entry?'Sustituir plato':'Añadir plato'}</h3><button className="secondary" disabled={busy} onClick={()=>setSelection(null)}>Cancelar selección</button></div>
       <p>{dayLabel(selection.day)} · {categories[selection.meal]}</p>
       <div className="recipe-filters"><label>Buscar plato<input type="search" value={search} onChange={e=>setSearch(e.target.value)}/></label><label>Categoría<select value={filter} onChange={e=>setFilter(e.target.value)}><option value="">Todas</option>{Object.entries(categories).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label></div>
-      <ul className="menu-picker-list">{filterRecipes(recipes,search,filter,false).map(recipe=><li key={recipe.id}><button className="secondary menu-picker-item" disabled={disabled} onClick={()=>void change({action:selection.entry?'replace':'add',entry:selection.entry,day:selection.day,meal:selection.meal,recipe:recipe.id})}>
+      <ul className="menu-picker-list">{filterRecipes(recipes,search,filter,false).map(recipe=><li key={recipe.id}><button className="secondary menu-picker-item" disabled={disabled} onClick={()=>void change({action:selection.entry?'replace':'add',entry:selection.entry,day:selection.day,meal:selection.meal,recipe:recipe.id},selection.revision)}>
         {recipe.photoUrl&&<img src={recipe.photoUrl} alt=""/>}<span><strong>{recipe.name}</strong>{recipe.description&&<span>{recipe.description}</span>}</span>
       </button></li>)}</ul>
       {!filterRecipes(recipes,search,filter,false).length&&<p className="empty-state">No hay platos con estos filtros.</p>}

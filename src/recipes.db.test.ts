@@ -26,6 +26,7 @@ beforeAll(async()=>{
  await db.exec(readFileSync('supabase/migrations/202611140001_households.sql','utf8'));
  await db.exec(readFileSync('supabase/migrations/202611150001_recipes.sql','utf8'));
  await db.exec(readFileSync('supabase/migrations/202611150002_weekly_menu.sql','utf8'));
+ await db.exec(readFileSync('supabase/migrations/202611160001_shopping_realtime.sql','utf8'));
  await user(1);await db.query(`select public.create_household('Casa A')`);
  await user(2);await db.query(`select public.create_household('Casa B')`);
 },30000);
