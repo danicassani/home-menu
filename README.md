@@ -27,6 +27,10 @@ La aplicación admitirá varias casas. Cada casa podrá tener varios usuarios y 
 
 Tanto el registro como el inicio de sesión se harán con **Google** mediante Supabase Auth. En la primera versión, el registro quedará completado al entrar con Google, sin un correo de confirmación adicional.
 
+## Navegación
+
+Las vistas Carta, Semana, Compra y Casa se abren desde una barra inferior fija con cuatro iconos, sin texto visible: plato con cubiertos, calendario, carrito y casa. Conservan etiquetas para lectores de pantalla, foco de teclado y una marca de vista activa. La barra respeta el área segura del móvil y deja espacio para los controles al final de cada vista.
+
 ## Perfil y apariencia
 
 El nombre del usuario y su avatar aparecerán en la esquina superior derecha. Al pulsar el avatar se abrirá el perfil, donde cada usuario podrá elegir un **emoji como avatar**, cambiar entre **modo claro y oscuro** y seleccionar un tema de color. Los temas disponibles serán **blanco, azul, rojo, rosa, verde y amarillo**, cada uno con su variante clara y oscura.
