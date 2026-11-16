@@ -10,7 +10,7 @@ async function seed(page:Page){
 }
 test('consulta datos guardados y conserva marcas al cambiar de pestaña sin conexión',async({page,context})=>{
  const state=await seed(page);state.networkOffline=true;await context.setOffline(true);
- await expect(page.getByText('Sin conexión',{exact:true})).toBeVisible();
+ await expect(page.locator('header').getByRole('status',{name:'Estado de sincronización'})).toHaveText('Sin conexión');
  await page.getByRole('checkbox',{name:'Pollo',exact:true}).click();await expect(page.getByText('1 marca pendiente')).toBeVisible();
  await page.getByRole('button',{name:'Carta',exact:true}).click();await page.getByRole('button',{name:/Pollo al horno/}).click();await expect(page.getByText('Hornear 30 minutos.')).toBeVisible();
  await expect(page.getByRole('button',{name:'Editar plato'})).toBeDisabled();
@@ -21,6 +21,7 @@ test('consulta datos guardados y conserva marcas al cambiar de pestaña sin cone
  await page.getByRole('button',{name:'Semana anterior'}).click();await expect(page.getByText('Comprados (1)')).toBeVisible();
  state.networkOffline=false;await context.setOffline(false);await expect(page.getByText('1 marca pendiente')).not.toBeVisible();
  await expect.poll(()=>state.reconcile(current)[0]?.purchased).toBe(true);
+ await expect(page.locator('header').getByRole('status',{name:'Sincronización activa'})).toHaveText('Online');
 });
 test('descarta una marca antigua si el producto se elimina y se reintroduce',async({page,context})=>{
  const state=await seed(page);const original=state.reconcile(current)[0].id;

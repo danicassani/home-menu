@@ -25,6 +25,8 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 - El cierre de sesión solo aparece dentro del perfil; la X del diálogo no cierra sesión. Conserva el acceso al perfil incluso cuando cargan o fallan sus preferencias.
 - Fotos: selector con icono de cámara y encuadre ajustable antes de subir. Cancelar conserva la foto anterior; nunca subas el original al confirmar el encuadre. Ingredientes: alternativa y borrador para quitar en la misma fila.
 
+- El saludo «Hola, nombre» se muestra pequeño junto al avatar del perfil, también en móvil. El estado de sincronización aparece bajo Home Menu: «Online» al estar suscrito, manteniendo los estados de conexión, reconexión y sin conexión. No hay separador entre cabecera y contenido.
+
 ## Implementación
 
 - React, TypeScript estricto, Vite y Tailwind; Cloudflare Pages y Supabase. Prefiere herramientas y scripts ya presentes; utiliza el lockfile y no mezcles gestores.

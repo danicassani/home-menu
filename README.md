@@ -35,6 +35,8 @@ Las vistas Carta, Semana, Compra y Casa se abren desde una barra inferior fija c
 
 El contenido se presenta directamente sobre el fondo, sin panel exterior ni separador bajo la cabecera. Se mantienen las tarjetas de platos y días, los colores y el espaciado.
 
+El saludo «Hola, nombre» se muestra pequeño junto al avatar del perfil, también en móvil. El estado de sincronización aparece bajo Home Menu: «Online» al estar suscrito, manteniendo los estados de conexión, reconexión y sin conexión. No hay separador entre cabecera y contenido.
+
 ## Perfil y apariencia
 
 Cerrar sesión está únicamente dentro del perfil y sigue disponible sin conexión o si falla la carga de preferencias. La X cierra la ventana sin salir de la cuenta.

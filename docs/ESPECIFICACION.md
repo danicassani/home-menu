@@ -10,6 +10,8 @@ El README actualizado desde `main` es la referencia funcional más reciente. Sus
 
 Interfaz estética, sencilla, accesible y pensada para móviles: tarjetas, color y buena jerarquía visual, sin textos de relleno. Contenido directamente sobre el fondo, sin tarjeta exterior ni separador bajo la cabecera; conservar las tarjetas de platos y días. Único eslogan: «Olvida el 'qué comemos'». Navegación principal entre Carta, Semana, Compra y Casa mediante una barra inferior fija con iconos sin texto visible (plato con tenedor/cuchillo, calendario, carrito y casa). Conservar nombres accesibles, foco de teclado y marca de selección; respetar áreas seguras y no tapar los controles finales. Mostrar estados de carga, vacío, error y conexión sin ocultar fallos de sincronización. Controles cómodos al cocinar y comprar, etiquetas accesibles y foco visible; no comunicar estados solo mediante color.
 
+El saludo «Hola, nombre» se muestra pequeño junto al avatar del perfil, también en móvil. El estado de sincronización aparece bajo Home Menu: «Online» al estar suscrito, manteniendo los estados de conexión, reconexión y sin conexión. No hay separador entre cabecera y contenido.
+
 ### Acceso y casas
 
 - Registro e inicio de sesión exclusivamente con Google mediante Supabase Auth, sin confirmación adicional por correo.
