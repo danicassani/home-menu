@@ -2,7 +2,7 @@
 
 ## Referencias y alcance
 
-Lee README.md y docs/ESPECIFICACION.md antes de modificar comportamiento. El README obtenido de main incorpora requisitos posteriores al plan inicial: desayuno, alternativas, compra por nombres y perfil/temas. La especificación integra esos cambios; no recuperes reglas antiguas de cantidades o de solo comida/cena.
+Lee README.md y docs/ESPECIFICACION.md antes de modificar comportamiento. La planificación incluye solo comida y cena. Las recetas tienen etiquetas libres opcionales, independientes del turno; no recuperes categorías fijas ni desayunos. La compra muestra nombres sin cantidades y admite alternativas.
 
 Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, alternativas, fotos y archivo. Existe menú semanal con alternativas por aparición y copia entre semanas. Existe compra automática por semana con productos manuales, Comprados y sincronización Realtime por casa. Hay gestión de miembros, transferencia, salida y eliminación reanudable de casas. Existe perfil personal con avatar emoji, seis temas y modo claro/oscuro/sistema persistidos bajo RLS. Existe shell PWA instalable y consulta offline de carta, semanas y compra visitadas. Las marcas de compra se guardan en IndexedDB y se sincronizan con recibos idempotentes. Queda validar instalación y uso en dispositivos reales y Supabase remoto. Comprueba los scripts de package.json y mantén la documentación sincronizada con cada entrega.
 
@@ -27,6 +27,7 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 
 - React, TypeScript estricto, Vite y Tailwind; Cloudflare Pages y Supabase. Prefiere herramientas y scripts ya presentes; utiliza el lockfile y no mezcles gestores.
 - Diseña primero para móvil, en español, con HTML semántico, etiquetas, foco visible, navegación por teclado y contraste en todos los temas.
+- Normaliza etiquetas (NFC y espacios), deduplica sin distinguir mayúsculas y valida un máximo de 20 etiquetas de 40 caracteres Unicode por receta, también en PostgreSQL. Las categorías antiguas no se convierten en etiquetas.
 - Mantén identidad de ingredientes y deduplicación por catálogo. La compra muestra nombres, sin sumar cantidades; las alternativas pertenecen a cada aparición planificada.
 - Mantén fechas semanales como fechas de calendario y contempla cambios de mes/año.
 - Versiona migraciones y comprueba RLS, políticas de fotos e invariantes de casa junto a cada cambio de datos. Las operaciones críticas son transaccionales e idempotentes cuando proceda.

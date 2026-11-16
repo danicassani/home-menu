@@ -1,18 +1,27 @@
 import { supabase } from './supabase';
-export const categories = { breakfast: 'Desayuno', lunch: 'Comida', dinner: 'Cena' } as const;
-export type Category = keyof typeof categories;
 export type Ingredient = { id: string; name: string; kcal_per_100g: number | null };
 export type Line = { id: string; ingredient_id: string; alternatives: string[] };
-export type Recipe = { id: string; name: string; description: string; instructions: string; categories: Category[]; photo_path: string | null; archived: boolean; revision: number; lines: Line[]; photoUrl?: string };
-export type Draft = Pick<Recipe, 'name'|'description'|'instructions'|'categories'|'photo_path'|'lines'>;
-export const emptyDraft = (): Draft => ({ name: '', description: '', instructions: '', categories: ['lunch'], photo_path: null, lines: [] });
+export type Recipe = { id: string; name: string; description: string; instructions: string; tags: string[]; photo_path: string | null; archived: boolean; revision: number; lines: Line[]; photoUrl?: string };
+export type Draft = Pick<Recipe, 'name'|'description'|'instructions'|'tags'|'photo_path'|'lines'>;
+export const emptyDraft = (): Draft => ({ name: '', description: '', instructions: '', tags: [], photo_path: null, lines: [] });
 export function validatePhoto(file: File) {
   if (!['image/jpeg','image/png','image/webp'].includes(file.type)) return 'Usa una imagen JPEG, PNG o WebP.';
   if (file.size > 5 * 1024 * 1024) return 'La foto no puede superar 5 MB.';
   return null;
 }
-export function filterRecipes(recipes: Recipe[], search: string, category: string, archived: boolean) {
-  return recipes.filter(r => r.archived === archived && r.name.toLocaleLowerCase('es').includes(search.trim().toLocaleLowerCase('es')) && (!category || r.categories.includes(category as Category)));
+export const normalizeTag=(tag:string)=>tag.normalize('NFC').trim().replace(/\s+/gu,' ');
+export const tagKey=(tag:string)=>normalizeTag(tag).toLocaleLowerCase('es');
+const searchKey=(value:string)=>value.normalize('NFD').replace(/\p{M}/gu,'').toLocaleLowerCase('es');
+export function cleanTags(tags:string[]){return tags.map(normalizeTag).filter((tag,index,all)=>tag&&all.findIndex(value=>tagKey(value)===tagKey(tag))===index);}
+export function validateTags(tags:string[]){
+ if(tags.length>20)return 'Máximo 20 etiquetas por receta.';
+ if(tags.some(tag=>!normalizeTag(tag)||[...normalizeTag(tag)].length>40))return 'Cada etiqueta debe tener entre 1 y 40 caracteres.';
+ return null;
+}
+export function recipeTags(recipes:Recipe[]){return cleanTags(recipes.flatMap(recipe=>recipe.tags)).sort((a,b)=>a.localeCompare(b,'es'));}
+export function filterRecipes(recipes:Recipe[],search:string,tag:string,archived:boolean){
+ const words=searchKey(search).trim().split(/\s+/u).filter(Boolean);
+ return recipes.filter(recipe=>recipe.archived===archived&&(!tag||recipe.tags.some(value=>tagKey(value)===tagKey(tag)))&&words.every(word=>searchKey([recipe.name,...recipe.tags].join(' ')).includes(word)));
 }
 function client() { if (!supabase) throw new Error('Supabase no configurado'); return supabase; }
 export async function loadRecipeBook(houseId: string) {
@@ -24,6 +33,7 @@ export async function loadRecipeBook(houseId: string) {
     c.from('recipe_alternatives').select('line_id,ingredient_id').eq('household_id',houseId),
   ]);
   for (const result of [recipes,ingredients,lines,alternatives]) if (result.error) throw result.error;
+  if((recipes.data||[]).some(recipe=>!Array.isArray(recipe.tags)))throw new Error('Datos de recetas no compatibles');
   const mapped: Recipe[] = (recipes.data || []).map(r => ({...r, lines:(lines.data || []).filter(l=>l.recipe_id===r.id).map(l=>({ id:l.id, ingredient_id:l.ingredient_id, alternatives:(alternatives.data||[]).filter(a=>a.line_id===l.id).map(a=>a.ingredient_id) })) }));
   const paths = [...new Set(mapped.flatMap(r=>r.photo_path?[r.photo_path]:[]))];
   let photoError = false;
@@ -48,7 +58,7 @@ export async function uploadPhoto(houseId: string, file: File) {
   return path;
 }
 export async function saveRecipe(original: Recipe | null, draft: Draft) {
-  const result=await client().rpc('save_recipe',{ p_id:original?.id || null, p_revision:original?.revision || null, p_name:draft.name, p_description:draft.description, p_instructions:draft.instructions, p_categories:draft.categories, p_photo_path:draft.photo_path, p_lines:draft.lines });
+  const result=await client().rpc('save_recipe',{ p_id:original?.id || null, p_revision:original?.revision || null, p_name:draft.name, p_description:draft.description, p_instructions:draft.instructions, p_tags:draft.tags, p_photo_path:draft.photo_path, p_lines:draft.lines });
   if(result.error) throw result.error;
 }
 export async function archiveRecipe(recipe: Recipe) {

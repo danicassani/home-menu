@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import PhotoCropper from './PhotoCropper';
 import IngredientPicker from './IngredientPicker';
-import { categories, emptyDraft, saveRecipe, uploadPhoto, validatePhoto, type Category, type Draft, type Ingredient, type Recipe } from './recipes';
-export default function RecipeEditor({ original, houseId, ingredients, online, onCreated, onCancel, onSaved }: {
-  original:Recipe|null; houseId:string; ingredients:Ingredient[]; online:boolean;
+import { cleanTags, normalizeTag, tagKey, validateTags, emptyDraft, saveRecipe, uploadPhoto, validatePhoto, type Draft, type Ingredient, type Recipe } from './recipes';
+export default function RecipeEditor({ original, houseId, ingredients, availableTags=[], online, onCreated, onCancel, onSaved }: {
+  original:Recipe|null; houseId:string; ingredients:Ingredient[]; availableTags?:string[]; online:boolean;
   onCreated:(ingredient:Ingredient)=>void; onCancel:()=>void; onSaved:()=>void;
 }) {
   const [draft,setDraft]=useState<Draft>(()=>original?{...original,lines:original.lines.map(l=>({...l,alternatives:[...l.alternatives]}))}:emptyDraft());
+  const [tagText,setTagText]=useState('');
+  const tagList=useId();
   const [picker,setPicker]=useState<'ingredient'|number|null>(null);
   const [cropSource,setCropSource]=useState<File|string|null>(null);
   const [localSource,setLocalSource]=useState<File|null>(null);
@@ -27,17 +29,23 @@ export default function RecipeEditor({ original, houseId, ingredients, online, o
     else if(typeof picker==='number')setDraft(d=>({...d,lines:d.lines.map((l,index)=>index===picker?{...l,alternatives:[...l.alternatives,id]}:l)}));
     setPicker(null);
   }
+  function addTag(){
+    if(!normalizeTag(tagText))return;const tags=cleanTags([...draft.tags,tagText]);const problem=validateTags(tags);
+    if(problem){setError(problem);return;}setDraft(d=>({...d,tags}));setTagText('');setError('');
+  }
   async function submit(e:React.FormEvent) {
     e.preventDefault();if(busy||!online||cropSource)return;
-    if(!draft.name.trim()||!draft.instructions.trim()||!draft.lines.length||!draft.categories.length){setError('Completa nombre, categoría, ingredientes y receta.');return;}
-    setBusy(true);setError('');
+    if(!draft.name.trim()||!draft.instructions.trim()||!draft.lines.length){setError('Completa nombre, ingredientes y receta.');return;}
+    const tags=cleanTags([...draft.tags,...(normalizeTag(tagText)?[tagText]:[])]);
+    const tagError=validateTags(tags);if(tagError){setError(tagError);return;}
+    setDraft(d=>({...d,tags}));setTagText('');setBusy(true);setError('');
     try {
       let photo=draft.photo_path;
       if(file){
         if(upload.current?.file!==file)upload.current={file,path:await uploadPhoto(houseId,file)};
         photo=upload.current.path;
       }
-      await saveRecipe(original,{...draft,photo_path:photo});
+      await saveRecipe(original,{...draft,tags,photo_path:photo});
       onSaved();
     }catch{setError('No se ha podido guardar. Si otra persona ha editado el plato, vuelve a cargar la carta.');}
     finally{setBusy(false);}
@@ -48,7 +56,11 @@ export default function RecipeEditor({ original, houseId, ingredients, online, o
     <fieldset disabled={busy||!online} className="editor-fields">
       <label>Nombre del plato<input required maxLength={120} value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label>
       <label>Descripción<textarea maxLength={500} rows={2} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})}/></label>
-      <fieldset className="category-options"><legend>Categorías</legend>{Object.entries(categories).map(([value,label])=><label key={value}><input type="checkbox" checked={draft.categories.includes(value as Category)} onChange={e=>setDraft(d=>({...d,categories:e.target.checked?[...d.categories,value as Category]:d.categories.filter(c=>c!==value)}))}/>{label}</label>)}</fieldset>
+      <fieldset className="recipe-tags"><legend>Etiquetas</legend>
+       <div className="tag-entry"><label className="sr-only" htmlFor={tagList}>Nueva etiqueta</label><input id={tagList} list={tagList+'-suggestions'} value={tagText} maxLength={160} onChange={event=>setTagText(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'&&!event.nativeEvent.isComposing){event.preventDefault();addTag();}}}/><button type="button" className="secondary compact" aria-label="Añadir etiqueta" disabled={!normalizeTag(tagText)} onClick={addTag}>+</button></div>
+       <datalist id={tagList+'-suggestions'}>{availableTags.filter(tag=>!draft.tags.some(value=>tagKey(value)===tagKey(tag))).map(tag=><option key={tag} value={tag}/>)}</datalist>
+       {draft.tags.length>0&&<ul className="tag-chips">{draft.tags.map(tag=><li key={tag}><button type="button" className="secondary compact" aria-label={`Quitar etiqueta ${tag}`} onClick={()=>setDraft(d=>({...d,tags:d.tags.filter(value=>value!==tag)}))}>{tag}<span aria-hidden="true"> ×</span></button></li>)}</ul>}
+      </fieldset>
       <div className="photo-controls">
        <input className="photo-input" aria-label="Foto (opcional)" ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={event=>{
         const selected=event.target.files?.[0];event.target.value='';if(!selected)return;

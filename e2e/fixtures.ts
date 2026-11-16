@@ -11,8 +11,8 @@ export function createFixtureState() {
  const members=[{user_id:house.owner_id,display_name:'Alex',membership_id:crypto.randomUUID()},{user_id:'00000000-0000-0000-0000-000000000002',display_name:'Sam',membership_id:crypto.randomUUID()}];
  const files=new Set<string>();
  const ingredients=[{id:'00000000-0000-0000-0000-000000000021',name:'Pollo',kcal_per_100g:null},{id:'00000000-0000-0000-0000-000000000022',name:'Tofu',kcal_per_100g:80}];
- type Dish={id:string;name:string;description:string;instructions:string;categories:string[];photo_path:string|null;revision:number;archived:boolean};
- const recipes:Dish[]=[{id:'00000000-0000-0000-0000-000000000030',name:'Pollo al horno',description:'Con verduras',instructions:'Hornear 30 minutos.',categories:['lunch'],photo_path:null,revision:1,archived:false}];
+ type Dish={id:string;name:string;description:string;instructions:string;tags:string[];photo_path:string|null;revision:number;archived:boolean};
+ const recipes:Dish[]=[{id:'00000000-0000-0000-0000-000000000030',name:'Pollo al horno',description:'Con verduras',instructions:'Hornear 30 minutos.',tags:['Al horno'],photo_path:null,revision:1,archived:false}];
  const lines=[{id:'00000000-0000-0000-0000-000000000040',recipe_id:recipes[0].id,ingredient_id:ingredients[0].id,position:0}];
  const alternatives=[{line_id:lines[0].id,ingredient_id:ingredients[1].id}];
  const weeks=new Map<string,MenuWeek>();
@@ -167,7 +167,7 @@ export async function setupApp(page:Page,state=createFixtureState(),userId='0000
    const data=route.request().postDataJSON();
    if(data.p_id&&recipes.find(r=>r.id===data.p_id)?.revision!==data.p_revision){await route.fulfill({status:409,json:{message:'El plato ha cambiado'}});return;}
    if(data.p_id&&recipes.find(r=>r.id===data.p_id)?.revision!==data.p_revision){await route.fulfill({status:409,json:{message:'El plato ha cambiado'}});return;}
-   const recipe={id:data.p_id||crypto.randomUUID(),name:data.p_name,description:data.p_description,instructions:data.p_instructions,categories:data.p_categories,photo_path:data.p_photo_path,revision:(data.p_revision||0)+1,archived:false};
+   const recipe={id:data.p_id||crypto.randomUUID(),name:data.p_name,description:data.p_description,instructions:data.p_instructions,tags:data.p_tags,photo_path:data.p_photo_path,revision:(data.p_revision||0)+1,archived:false};
    const index=recipes.findIndex(r=>r.id===recipe.id);
    if(index>=0)recipes.splice(index,1,recipe);else recipes.push(recipe);
    for(let i=lines.length-1;i>=0;i--)if(lines[i].recipe_id===recipe.id)lines.splice(i,1);

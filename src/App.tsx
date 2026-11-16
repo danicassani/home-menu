@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { cachedIdentity, rememberIdentity, retainPrivateUser, type OfflineIdentity } from './offline';
-import { supabase } from './supabase';
+import { hasRememberedSession, supabase } from './supabase';
 import InstallApp from './InstallApp';
 import Household from './Household';
 import AccountProfile from './AccountProfile';
@@ -25,7 +25,7 @@ export default function App() {
     let active = true;
     let authChanged = false,identityAllowed=true,authVersion=0;
     if(!navigator.onLine)void cachedIdentity().then(identity=>{
-      if(active&&identityAllowed&&identity){void retainPrivateUser(identity.id).catch(()=>{});setOfflineIdentity(identity);setLoading(false);}
+      if(active&&identityAllowed&&identity){if(!hasRememberedSession(identity.id)){void retainPrivateUser(null).catch(()=>{});return;}void retainPrivateUser(identity.id).catch(()=>{});setOfflineIdentity(identity);setLoading(false);}
     }).catch(()=>{});
     const accept=(next:Session|null)=>{
       void retainPrivateUser(next?.user.id||null).catch(()=>{});

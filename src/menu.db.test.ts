@@ -8,7 +8,7 @@ let chicken:string,tofu:string,foreign:string,dish:string,otherDish:string;
 const uid=(n:number)=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
 const user=async(n:number)=>db.exec(`reset role;set role authenticated;set request.jwt.claim.sub='${uid(n)}';`);
 const get=async(week:string)=>(await db.query<{data:MenuWeek}>('select public.get_menu_week($1) as data',[week])).rows[0].data;
-async function change(week:string,revision:number,change:MenuChange) {
+async function change(week:string,revision:number,change:Omit<MenuChange,'meal'>&{meal?:string}) {
  return (await db.query<{data:MenuWeek}>('select public.change_menu_week($1,$2,$3,$4,$5,$6,$7,$8::jsonb) as data',[week,revision,change.action,change.entry||null,change.day||null,change.meal||null,change.recipe||null,JSON.stringify(change.choices||[])])).rows[0].data;
 }
 async function copy(source:string,target:string,revision:number,overwrite=false) {
@@ -35,6 +35,7 @@ beforeAll(async()=>{
  dish=(await save()).id;otherDish=(await save()).id;
 },30000);
 afterAll(async()=>{await db?.close();});
+// Historical contract before the recipe-tags migration; the new migration has its own tests.
 it('añade repeticiones en tres turnos, sustituye y quita individualmente con control de revisión',async()=>{
  await user(1);const week='2026-12-28';
  expect(await get(week)).toEqual({revision:0,entries:[]});

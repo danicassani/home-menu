@@ -4,7 +4,7 @@
 
 Documento para implementar una PWA móvil en español que permita a varios hogares independientes compartir platos, planificar la semana y comprar sus ingredientes. Actualmente existe una base React con portada, acceso Google, sesión y pruebas de cliente. Existen creación de casas e invitaciones caducables/revocables y una carta de platos con catálogo, alternativas, fotos privadas y archivo/restauración. También hay menú semanal con sustitución, alternativas por aparición y copia entre semanas. También existe compra automática con productos manuales, Comprados y sincronización por casa. También están implementadas la gestión de miembros, salida, transferencia y eliminación reanudable de casas. También existe perfil personal con avatar emoji y preferencias de tema/modo persistidas por cuenta. Existe shell PWA instalable, consulta offline de datos visitados y cola persistente de marcas de compra. Queda validar Supabase remoto e instalación/uso en dispositivos reales.
 
-El README actualizado desde `main` es la referencia funcional más reciente. Sustituye estas decisiones de la conversación inicial: el menú incluye desayuno, la compra muestra nombres sin cantidades y la primera versión incorpora alternativas, kilocalorías opcionales y personalización visual. No se debe implementar la suma de cantidades del plan anterior.
+El README actualizado desde `main` es la referencia funcional más reciente. Sustituye estas decisiones de la conversación inicial: el menú incluye solo comida y cena, las recetas usan etiquetas libres y la compra muestra nombres sin cantidades y la primera versión incorpora alternativas, kilocalorías opcionales y personalización visual. No se debe implementar la suma de cantidades del plan anterior.
 
 ## Experiencia de usuario
 
@@ -22,9 +22,11 @@ Interfaz estética, sencilla, accesible y pensada para móviles: tarjetas, color
 
 ### Carta de platos
 
-- Alta manual de platos con nombre, descripción breve, foto opcional, ingredientes y receta. Clasificación en desayuno, comida o cena; permitir varias categorías para un plato reutilizable.
+Las etiquetas se normalizan a NFC con espacios compactados, sin duplicados por mayúsculas. Se admiten 0–20 etiquetas de 1–40 caracteres Unicode por receta. El editor ofrece etiquetas de la casa como sugerencias, permite añadirlas con Enter/+ y quitar chips, y recoge una etiqueta escrita pendiente al guardar.
+
+- Alta manual de platos con nombre, descripción breve, foto opcional, ingredientes y receta. Etiquetas libres opcionales por receta, independientes de los turnos de comida y cena.
 - Tarjetas con nombre, foto y descripción. La ficha presenta foto, descripción, ingredientes y receta, en ese orden; omitir la foto cuando no exista.
-- Buscar platos por nombre y filtrar por categoría. No es obligatorio introducir etiquetas, tiempos ni raciones para esta primera versión.
+- Buscar por nombre y etiquetas sin distinguir mayúsculas ni acentos; permitir filtrar por una etiqueta. No es obligatorio introducir etiquetas, tiempos ni raciones para esta primera versión.
 - Archivar platos los retira de nuevas selecciones, conservando referencias desde menús existentes.
 - El selector de foto es un icono de cámara sin texto visible. Permite mover y ampliar el encuadre 4:3 con ratón, táctil o teclado, confirmar/cancelar y reajustar. Solo se sube el JPEG generado al guardar el plato; cancelar conserva la foto anterior.
 - Las fotos son privadas de la casa; validar formato y tamaño tanto en la interfaz como en almacenamiento. Para v1: JPEG, PNG o WebP y máximo 5 MB.
@@ -42,7 +44,7 @@ Interfaz estética, sencilla, accesible y pensada para móviles: tarjetas, color
 ### Semana
 
 - Semana de lunes a domingo, identificada por su fecha de lunes, sin convertir fechas de calendario a instantes UTC.
-- Cada día tiene desayuno, comida y cena, con varios platos por turno. Se permiten apariciones repetidas de un mismo plato.
+- Cada día tiene comida y cena, con varios platos por turno. Se permiten apariciones repetidas de un mismo plato.
 - Añadir, eliminar individualmente y sustituir platos. Sustituir abre la carta y conserva día y turno; reinicia alternativas a las de la nueva receta.
 - Navegar entre semanas y copiar otra semana. Confirmar antes de sobrescribir una semana con platos.
 - La copia replica platos y alternativas válidas; no copia estados de compra ni productos manuales.
@@ -100,7 +102,7 @@ Los envíos usan `apply_shopping_mark` con UUID persistente y recibos privados. 
 
 1. **Base y acceso:** crear el proyecto, herramientas, migraciones, Google Auth, casas e invitaciones. Comprobar acceso real, aceptación concurrente y aislamiento entre dos casas.
 2. **Carta:** CRUD, catálogo, alternativas, fotos y archivo. Comprobar búsqueda, orden de ficha, permisos de fotos y acceso a platos archivados desde menús.
-3. **Semana:** tres turnos, varios platos, sustitución, alternativas por aparición y copia. Comprobar semanas que cruzan mes/año y confirmación al sobrescribir.
+3. **Semana:** dos turnos, varios platos, sustitución, alternativas por aparición y copia. Comprobar semanas que cruzan mes/año y confirmación al sobrescribir.
 4. **Compra:** derivación transaccional, productos manuales, Comprados y Realtime. Comprobar deduplicación, alternativa elegida, retirar/reintroducir ingredientes y colaboración entre dos miembros.
 5. **Perfil y PWA:** emoji, doce combinaciones de tema/modo, instalación y caché/cola offline. Comprobar reconexión, invalidación de pendientes antiguos y limpieza al cerrar sesión o perder pertenencia.
 
@@ -115,3 +117,10 @@ Registro abierto con Google y contenido privado por casa. Sin panel global, IA, 
 No mezclar datos de ejemplo con datos reales. La eliminación de una casa incluye sus datos y fotos; no elimina automáticamente las cuentas Google/Supabase de sus miembros. La gestión de borrado de cuenta y las políticas legales deberán definirse antes de un lanzamiento público; no confundir la validación de desarrollo con aprobación de ese lanzamiento.
 
 Los comandos de instalación, desarrollo y comprobación de la base están documentados en README. El acceso real necesita configuración de Supabase; las pruebas de cliente no sustituyen esa validación.
+
+
+## Cambio de categorías a etiquetas
+
+La entrega `202611160005_recipe_tags.sql` conserva las recetas, vacía las categorías antiguas al convertirlas en etiquetas y elimina los desayunos planificados, como ha solicitado el usuario. Recalcula la compra de las semanas afectadas conservando aportaciones manuales y marcas aún vigentes; incrementa revisiones para invalidar borradores antiguos. La planificación acepta únicamente `lunch` y `dinner`. El guardado usa `p_tags` y mantiene las garantías de autorización, alternativas y reconciliación.
+
+La actualización de IndexedDB a versión 2 elimina los snapshots incompatibles y conserva identidad, pertenencia y cola de marcas. Tras actualizar es necesaria una visita online para volver a tener snapshots consultables offline. Las marcas de compra se siguen validando por generación de producto en el servidor.

@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { categories, filterRecipes, type Category, type Ingredient, type Recipe } from './recipes';
-import { addDays, calendarDay, changeMenuWeek, copyMenuWeek, dayLabel, monday, weekLabel, type MenuChange, type MenuWeek } from './menu';
+import { filterRecipes, recipeTags, type Ingredient, type Recipe } from './recipes';
+import { addDays, calendarDay, changeMenuWeek, copyMenuWeek, dayLabel, monday, weekLabel, type MenuChange, type MenuWeek, meals, type Meal } from './menu';
 import { useOffline } from './offline';
 import { readBook, readMenu } from './offlineResources';
 import WeekNavigation from './WeekNavigation';
 import { useRealtimeRefresh } from './realtime';
-type Selection = { day:string; meal:Category; entry?:string; revision:number };
+type Selection = { day:string; meal:Meal; entry?:string; revision:number };
 export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{houseId:string;online:boolean;selectedWeek?:string;onWeekChange?:(week:string)=>void}) {
   const workspace=useOffline();
   const [localWeek,setLocalWeek]=useState(()=>monday(calendarDay(new Date())));
@@ -54,24 +54,24 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
     catch{setError('No se ha podido copiar. Comprueba que la semana de origen tenga platos y actualiza.');}
     finally{setBusy(false);}
   }
-  function choose(day:string,meal:Category,entry?:string){setSelection({day,meal,entry,revision:data.revision});setSearch('');setFilter(meal);}
+  function choose(day:string,meal:Meal,entry?:string){setSelection({day,meal,entry,revision:data.revision});setSearch('');setFilter('');}
   return <section className="weekly-menu" aria-label="Menú semanal">
     <div className="section-heading"><h2>Semana</h2><button className="secondary compact" disabled={busy||loading} onClick={()=>{setSelection(null);setRetry(n=>n+1);}}>Actualizar semana</button></div>
     <WeekNavigation week={week} disabled={busy||loading||Boolean(selection)} onChange={setWeek}/>
     {error&&<p role="alert">{error}</p>}
     {loading?<p role="status">Cargando semana…</p>:selection?<section className="menu-picker" aria-label="Elegir plato">
       <div className="section-heading"><h3>{selection.entry?'Sustituir plato':'Añadir plato'}</h3><button className="secondary" disabled={busy} onClick={()=>setSelection(null)}>Cancelar selección</button></div>
-      <p>{dayLabel(selection.day)} · {categories[selection.meal]}</p>
-      <div className="recipe-filters"><label>Buscar plato<input type="search" value={search} onChange={e=>setSearch(e.target.value)}/></label><label>Categoría<select value={filter} onChange={e=>setFilter(e.target.value)}><option value="">Todas</option>{Object.entries(categories).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label></div>
+      <p>{dayLabel(selection.day)} · {meals[selection.meal]}</p>
+      <div className="recipe-filters"><label>Buscar plato<input type="search" value={search} onChange={e=>setSearch(e.target.value)}/></label><label>Etiqueta<select value={filter} onChange={e=>setFilter(e.target.value)}><option value="">Todas</option>{recipeTags(recipes).map(tag=><option key={tag} value={tag}>{tag}</option>)}</select></label></div>
       <ul className="menu-picker-list">{filterRecipes(recipes,search,filter,false).map(recipe=><li key={recipe.id}><button className="secondary menu-picker-item" disabled={disabled} onClick={()=>void change({action:selection.entry?'replace':'add',entry:selection.entry,day:selection.day,meal:selection.meal,recipe:recipe.id},selection.revision)}>
-        {recipe.photoUrl&&<img src={recipe.photoUrl} alt=""/>}<span><strong>{recipe.name}</strong>{recipe.description&&<span>{recipe.description}</span>}</span>
+        {recipe.photoUrl&&<img src={recipe.photoUrl} alt=""/>}<span><strong>{recipe.name}</strong>{recipe.description&&<span>{recipe.description}</span>}{recipe.tags.length>0&&<span className="tag-badges">{recipe.tags.map(tag=><span key={tag}>{tag}</span>)}</span>}</span>
       </button></li>)}</ul>
       {!filterRecipes(recipes,search,filter,false).length&&<p className="empty-state">No hay platos con estos filtros.</p>}
     </section>:<>
       <div className="copy-week"><label>Copiar desde<input type="date" value={source} disabled={disabled} onChange={e=>{if(e.target.value)setSource(monday(e.target.value));}}/></label><button className="secondary" disabled={disabled||Boolean(error)||source===week} onClick={()=>void copy()}>Copiar semana</button></div>
       <div className="week-grid">{Array.from({length:7},(_,index)=>addDays(week,index)).map(day=><section className="menu-day" key={day} aria-label={dayLabel(day)}>
         <h3>{dayLabel(day)}</h3>
-        {(Object.entries(categories) as [Category,string][]).map(([meal,label])=><section key={meal} className="meal-slot" aria-label={`${day} ${label}`}>
+        {(Object.entries(meals) as [Meal,string][]).map(([meal,label])=><section key={meal} className="meal-slot" aria-label={`${day} ${label}`}>
           <div className="section-heading"><h4>{label}</h4><button className="secondary compact" disabled={disabled||Boolean(error)} aria-label={`Añadir ${label.toLowerCase()} del ${day}`} onClick={()=>choose(day,meal)}>+</button></div>
           {data.entries.filter(e=>e.planned_day===day&&e.meal===meal).map(entry=>{
             const recipe=recipes.find(r=>r.id===entry.recipe_id);

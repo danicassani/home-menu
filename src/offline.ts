@@ -10,8 +10,13 @@ type Queue={marks:Mark[];discarded:number};
 let database:Promise<IDBDatabase>|undefined;
 function db(){
  if(!database)database=new Promise<IDBDatabase>((resolve,reject)=>{
-  const request=indexedDB.open('home-menu-private',1);
-  request.onupgradeneeded=()=>request.result.createObjectStore('data',{keyPath:'key'});
+  const request=indexedDB.open('home-menu-private',2);
+  request.onupgradeneeded=event=>{
+   if(event.oldVersion===0){request.result.createObjectStore('data',{keyPath:'key'});return;}
+   const cursor=request.transaction!.objectStore('data').openCursor();
+   cursor.onsuccess=()=>{const row=cursor.result;if(!row)return;const name=String(row.key).split('/').at(-1)||'';
+    if(name==='book'||name.startsWith('menu:')||name.startsWith('shopping:'))row.delete();row.continue();};
+  };
   request.onsuccess=()=>{request.result.onversionchange=()=>{request.result.close();database=undefined;};resolve(request.result);};
   request.onerror=()=>reject(request.error);
  }).catch(error=>{database=undefined;throw error;});
