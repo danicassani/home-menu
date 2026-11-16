@@ -7,21 +7,21 @@ import RecipeBook from './RecipeBook';
 import { HouseholdUpdates } from './realtime';
 import type { Recipe } from './recipes';
 const ingredients=[{id:'chicken',name:'Pollo',kcal_per_100g:null},{id:'tofu',name:'Tofu',kcal_per_100g:80}];
-const recipe:Recipe={id:'dish',name:'Pollo al horno',description:'Con verduras',instructions:'Hornear 30 minutos.',categories:['lunch'],photo_path:null,revision:3,archived:false,lines:[{id:'line',ingredient_id:'chicken',alternatives:['tofu']}]};
+const recipe:Recipe={id:'dish',name:'Pollo al horno',description:'Con verduras',instructions:'Hornear 30 minutos.',tags:['Al horno'],photo_path:null,revision:3,archived:false,lines:[{id:'line',ingredient_id:'chicken',alternatives:['tofu']}]};
 beforeEach(()=>{
  api.loadRecipeBook.mockResolvedValue({recipes:[recipe],ingredients,photoError:false});
  api.saveRecipe.mockResolvedValue(undefined);api.archiveRecipe.mockResolvedValue(undefined);
 });
-it('filtra por nombre y categoría y abre la ficha con alternativas',async()=>{
+it('filtra por nombre y etiqueta y abre la ficha con alternativas',async()=>{
  render(<RecipeBook houseId="house" online/>);
  fireEvent.click(await screen.findByRole('button',{name:/Pollo al horno/}));
  expect(screen.getByRole('heading',{name:'Ingredientes'})).toBeInTheDocument();
  expect(screen.getByText('Alternativas: Tofu')).toBeInTheDocument();
  expect(screen.getByText('Hornear 30 minutos.')).toBeInTheDocument();
  fireEvent.click(screen.getByRole('button',{name:'Volver a carta'}));
- fireEvent.change(screen.getByLabelText('Categoría'),{target:{value:'breakfast'}});
+ fireEvent.change(screen.getByLabelText('Buscar plato'),{target:{value:'sin coincidencias'}});
  expect(screen.getByText('No hay platos con estos filtros.')).toBeInTheDocument();
- fireEvent.change(screen.getByLabelText('Categoría'),{target:{value:''}});
+ fireEvent.change(screen.getByLabelText('Etiqueta'),{target:{value:''}});
  fireEvent.change(screen.getByLabelText('Buscar plato'),{target:{value:'POLLO'}});
  expect(screen.getByRole('button',{name:/Pollo al horno/})).toBeInTheDocument();
 });
@@ -93,4 +93,14 @@ it('una actualización recibida al abrir el editor no sustituye la revisión del
  await screen.findByRole('alert');
  expect(api.saveRecipe).toHaveBeenCalledWith(expect.objectContaining({revision:3}),expect.objectContaining({name:'Mi borrador'}));
  expect(screen.getByLabelText('Nombre del plato')).toHaveValue('Mi borrador');
+});
+it('guarda etiquetas opcionales y añade el texto pendiente al guardar el plato',async()=>{
+ render(<RecipeBook houseId="house" online/>);fireEvent.click(await screen.findByRole('button',{name:/Pollo al horno/}));fireEvent.click(screen.getByRole('button',{name:'Editar plato'}));
+ expect(screen.queryByLabelText('Categorías')).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Quitar etiqueta Al horno'}));
+ fireEvent.change(screen.getByLabelText('Nueva etiqueta'),{target:{value:'  Muy   rápido '}});
+ fireEvent.keyDown(screen.getByLabelText('Nueva etiqueta'),{key:'Enter'});
+ fireEvent.change(screen.getByLabelText('Nueva etiqueta'),{target:{value:'Vegetariano'}});
+ fireEvent.click(screen.getByRole('button',{name:'Guardar plato'}));
+ await waitFor(()=>expect(api.saveRecipe).toHaveBeenCalledWith(expect.objectContaining({id:'dish'}),expect.objectContaining({tags:['Muy rápido','Vegetariano']})));
 });

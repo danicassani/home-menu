@@ -23,3 +23,13 @@ test('cerrar sesión offline elimina instantáneas y cola privadas',async({page,
  await expect(page.getByRole('button',{name:/Continuar con Google/})).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>new Promise<number>((resolve,reject)=>{const r=indexedDB.open('home-menu-private');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result;const count=db.transaction('data').objectStore('data').count();count.onsuccess=()=>{resolve(count.result);db.close();};};}))).toBe(0);
 });
+
+test('no restaura datos offline si otra versión ya eliminó la sesión recordada',async({page,context})=>{
+ const state=await setupApp(page);await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
+ await expect.poll(()=>page.evaluate(()=>Boolean(navigator.serviceWorker.controller))).toBe(true);
+ state.networkOffline=true;await context.setOffline(true);
+ await page.addInitScript(()=>localStorage.removeItem('sb-fixture-auth-token'));
+ await page.reload();await expect(page.getByRole('button',{name:/Continuar con Google/})).toBeVisible();
+ await expect(page.getByRole('navigation',{name:'Secciones'})).toHaveCount(0);
+ await expect.poll(()=>page.evaluate(()=>new Promise<number>((resolve,reject)=>{const r=indexedDB.open('home-menu-private');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,count=db.transaction('data').objectStore('data').count();count.onsuccess=()=>{resolve(count.result);db.close();};};}))).toBe(0);
+});

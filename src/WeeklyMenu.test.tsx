@@ -7,7 +7,7 @@ import { OfflineContext, OfflineWorkspace } from './offline';
 import WeeklyMenu from './WeeklyMenu';
 import { calendarDay, monday } from './menu';
 const current=monday(calendarDay(new Date()));
-const recipe={id:'dish',name:'Pollo',description:'',instructions:'Cocinar',categories:['lunch'],archived:false,photo_path:null,revision:1,lines:[{id:'line',ingredient_id:'chicken',alternatives:['tofu']}]};
+const recipe={id:'dish',name:'Pollo',description:'',instructions:'Cocinar',tags:['Al horno'],archived:false,photo_path:null,revision:1,lines:[{id:'line',ingredient_id:'chicken',alternatives:['tofu']}]};
 const entry={id:'entry',planned_day:current,meal:'lunch',recipe_id:'dish',choices_reset:false,choices:[]};
 beforeEach(()=>{
  api.loadMenuWeek.mockResolvedValue({revision:2,entries:[entry]});
@@ -24,7 +24,7 @@ it('elige una alternativa solo para esa aparición y conserva revisión',async()
 it('abre la carta para sustituir conservando el identificador de aparición',async()=>{
  render(<WeeklyMenu houseId="house" online/>);
  fireEvent.click(await screen.findByRole('button',{name:'Sustituir'}));
- fireEvent.click(screen.getByRole('button',{name:'Pollo'}));
+ fireEvent.click(screen.getByRole('button',{name:/^Pollo/}));
  await waitFor(()=>expect(api.changeMenuWeek).toHaveBeenCalledWith(current,2,expect.objectContaining({action:'replace',entry:'entry',day:current,meal:'lunch',recipe:'dish'})));
 });
 it('no sobrescribe una semana si se cancela la confirmación',async()=>{

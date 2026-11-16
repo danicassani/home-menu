@@ -3,7 +3,7 @@ PWA instalable en Android y iPhone para crear una carta de platos caseros, plani
 
 ## Carta de platos
 
-Los usuarios podrán crear platos a mano y clasificarlos como **desayuno, comida o cena**. La carta mostrará los platos como tarjetas con nombre, foto y una descripción breve. Al pulsar una tarjeta, se abrirá la ficha del plato con la **foto, la descripción, los ingredientes y la receta**, en ese orden.
+Los usuarios podrán crear platos a mano y organizarlos con **etiquetas libres y opcionales**. La carta mostrará los platos como tarjetas con nombre, foto y una descripción breve. Al pulsar una tarjeta, se abrirá la ficha del plato con la **foto, la descripción, los ingredientes y la receta**, en ese orden.
 
 ## Ingredientes y alternativas
 
@@ -15,7 +15,7 @@ Algunos ingredientes de una receta podrán tener alternativas seleccionables man
 
 ## Planificación semanal
 
-Cada día tendrá un espacio para desayuno, comida y cena. Los usuarios podrán elegir platos de la carta y eliminar individualmente los que ya estén planificados. El botón **Sustituir** abrirá la carta para elegir otro plato y colocarlo en el mismo día y turno.
+Cada día tendrá un espacio para comida y cena. Los usuarios podrán elegir platos de la carta y eliminar individualmente los que ya estén planificados. El botón **Sustituir** abrirá la carta para elegir otro plato y colocarlo en el mismo día y turno.
 
 ## Lista de la compra
 
@@ -78,7 +78,7 @@ Antes de desplegar esta entrega, aplica `supabase/migrations/202611140001_househ
 
 ## Carta de platos
 
-La sección Carta permite crear y editar platos, filtrar por nombre y categoría, consultar la ficha y archivar/restaurar. El selector + reutiliza ingredientes del hogar y permite crearlos con kcal opcionales. Cada ingrediente admite alternativas del mismo catálogo. Las elecciones por día se incorporarán con la planificación semanal.
+La sección Carta permite crear y editar platos, buscar por nombre y etiquetas y filtrar por etiqueta, consultar la ficha y archivar/restaurar. El selector + reutiliza ingredientes del hogar y permite crearlos con kcal opcionales. Cada ingrediente admite alternativas del mismo catálogo. Las elecciones por día se incorporarán con la planificación semanal.
 
 Las fotos son opcionales, privadas y de hasta 5 MB (JPEG, PNG o WebP). El icono de cámara abre el selector; antes de adjuntar se ajusta el encuadre 4:3 con arrastre, gesto de pinza, flechas del teclado y zoom. Se genera un JPEG de hasta 1600 × 1200, sin ampliar imágenes pequeñas, y solo se sube al guardar el plato. Cancelar conserva la foto anterior; el icono de recorte permite reajustarla. Se muestran mediante enlaces firmados de una hora; Actualizar renueva los enlaces. Editar una versión antigua de un plato falla conservando el borrador, para evitar sobrescribir cambios de otro miembro.
 
@@ -101,7 +101,7 @@ Playwright inicia un servidor aislado con respuestas HTTP simuladas, sin credenc
 
 ## Menú semanal
 
-La pestaña Semana organiza de lunes a domingo los desayunos, comidas y cenas. Cada turno admite varios platos, incluso repetidos. Añadir y Sustituir abren la carta; el filtro empieza en el turno elegido y puede cambiarse a Todas. Quitar afecta solo a esa aparición.
+La pestaña Semana organiza de lunes a domingo las comidas y cenas. Cada turno admite varios platos, incluso repetidos. Añadir y Sustituir abren la carta con búsqueda y filtro por etiquetas. Cualquier receta puede usarse en comida o cena. Quitar afecta solo a esa aparición.
 
 En Ingredientes se eligen las alternativas de cada plato planificado sin cambiar la receta ni otras apariciones. Si una edición elimina una alternativa elegida, se vuelve al ingrediente original y se muestra un aviso para revisar la receta. Las recetas archivadas siguen visibles en menús existentes, pero no se ofrecen para añadir o sustituir.
 
@@ -175,3 +175,16 @@ npm run test:pwa
 ```
 
 `test:pwa` compila con configuración ficticia de pruebas y sirve el build en un puerto aislado. Comprueba service worker, recarga offline con sesión caducada, persistencia de marcas, limpieza al cerrar sesión y ausencia de respuestas privadas en Cache Storage. Genera de nuevo el build con tu configuración habitual si vas a desplegar después. Playwright usa Chromium con viewports móvil/escritorio y Auth/HTTP/WebSocket simulados; no acredita instalación real en Android/iPhone. Las pruebas SQL locales cubren también reintentos, permisos y pertenencias antiguas. Queda validar los servicios remotos y los dispositivos reales.
+
+
+## Etiquetas y retirada de desayunos
+
+Las recetas admiten etiquetas libres opcionales, sin categorías fijas de comida o cena. Escríbelas en Nueva etiqueta y confirma con Enter o +; Guardar plato también recoge el texto pendiente. Se sugieren etiquetas de la casa y se pueden quitar individualmente. Se normalizan los espacios y Unicode, se deduplican sin distinguir mayúsculas y se admiten hasta 20 etiquetas de 40 caracteres por receta. Las recetas sin etiquetas siguen siendo válidas.
+
+La carta y el selector de platos del menú buscan por nombre y etiquetas, sin distinguir mayúsculas ni acentos; también permiten filtrar por una etiqueta. Las etiquetas no restringen los turnos de planificación: cualquier receta puede colocarse en comida o cena. No hay opción de añadir desayunos, ni en la interfaz ni en PostgreSQL.
+
+**Nueva migración:** aplicar una vez `supabase/migrations/202611160005_recipe_tags.sql`, después de las siete anteriores y antes de desplegar. Conserva todas las recetas y sustituye las categorías antiguas por listas vacías de etiquetas. Elimina los desayunos ya planificados y sus alternativas, aumenta la revisión de las semanas afectadas y recalcula la compra. Mantiene los productos manuales y las marcas de los productos que sigan siendo necesarios. No borra platos, ingredientes ni fotos.
+
+La migración sustituye la función de guardado para aceptar `p_tags`; mantiene permisos, revisiones, reparación de alternativas y recálculo transaccional de la compra. Los editores antiguos no pueden sobrescribir recetas con revisiones previas. No requiere nuevas variables ni secretos y no se ha aplicado en el proyecto remoto.
+
+Al actualizar la app, IndexedDB pasa a versión 2 y retira los snapshots antiguos de carta, menú y compra. Conserva identidad, pertenencia y marcas pendientes. Abre la versión nueva online antes de volver a usarla offline; las marcas pendientes de productos retirados se descartarán al sincronizar y las demás se conservarán.

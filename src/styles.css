@@ -136,10 +136,8 @@ textarea { resize: vertical; }
 fieldset { min-width: 0; border: 0; padding: 0; margin: 0 0 24px; }
 legend { font-size: 14px; font-weight: 650; margin-bottom: 12px; }
 button.compact { min-height: 36px; padding: 6px 12px; font-size: 12px; }
-.inline-check, .category-options label { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
-.inline-check input, .category-options input { width: 18px; height: 18px; min-height: 0; margin: 0; accent-color: var(--primary); }
-.category-options { display: flex; flex-wrap: wrap; gap: 12px 24px; }
-.category-options label { font-size: 14px; font-weight: 400; }
+.inline-check { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
+.inline-check input { width: 18px; height: 18px; min-height: 0; margin: 0; accent-color: var(--primary); }
 .recipe-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; }
 button.recipe-card { display: block; padding: 0; margin: 0; overflow: hidden; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; color: var(--text); align-self: start; }
 button.recipe-card:hover { background: var(--soft); border-color: var(--border); }
@@ -149,13 +147,13 @@ button.recipe-card:hover { background: var(--soft); border-color: var(--border);
 .recipe-card-body { padding: 18px; }
 .recipe-card h3 { font-size: 16px; font-weight: 650; overflow-wrap: anywhere; }
 .recipe-card p { font-size: 13px; color: var(--muted); margin: 12px 0 0; font-weight: 400; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.category-badges { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0 0; }
-.category-badges span { padding: 3px 8px; background: var(--soft); color: var(--muted); border-radius: 6px; font-size: 11px; font-weight: 550; }
+.tag-badges { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0 0; }
+.tag-badges span { padding: 3px 8px; background: var(--soft); color: var(--muted); border-radius: 6px; font-size: 11px; font-weight: 550; }
 .empty-state { border: 1px dashed var(--border); border-radius: 12px; text-align: center; padding: 36px 20px; margin-top: 16px; color: var(--muted); font-size: 14px; }
 .recipe-detail { max-width: 640px; margin: auto; }
 .detail-photo { width: 100%; max-height: 360px; object-fit: contain; border-radius: 16px; margin-bottom: 24px; }
 .recipe-detail h2 { font-size: 26px; margin-bottom: 12px; }
-.recipe-detail .category-badges { margin-bottom: 20px; }
+.recipe-detail .tag-badges { margin-bottom: 20px; }
 .recipe-detail h3 { margin: 28px 0 12px; }
 .detail-ingredients { list-style: disc; padding-left: 20px; }
 .detail-ingredients li { margin: 12px 0; }
@@ -329,3 +327,10 @@ button.photo-icon { display: grid; place-items: center; width: 44px; min-height:
 button.ingredient-eraser { display: grid; place-items: center; width: 44px; padding: 10px; }
 .ingredient-eraser svg { width: 22px; height: 22px; }
 .alternative-chips:not(:empty) { margin-top: 10px; gap: 6px; }
+
+.tag-entry { display: flex; align-items: center; gap: 8px; }
+.tag-entry input { flex: 1; min-width: 0; margin: 0; }
+.tag-entry button { flex-shrink: 0; width: 44px; min-height: 44px; margin: 0; }
+.tag-chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 12px 0 0; }
+.tag-chips button { margin: 0; overflow-wrap: anywhere; max-width: 100%; }
+.tag-badges span { overflow-wrap: anywhere; }

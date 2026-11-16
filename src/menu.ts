@@ -1,7 +1,8 @@
 import { supabase } from './supabase';
-import type { Category } from './recipes';
+export const meals={lunch:'Comida',dinner:'Cena'} as const;
+export type Meal=keyof typeof meals;
 export type Choice = { ingredient_id:string; alternative_id:string };
-export type MenuEntry = { id:string; planned_day:string; meal:Category; recipe_id:string; choices_reset:boolean; choices:Choice[] };
+export type MenuEntry = { id:string; planned_day:string; meal:Meal; recipe_id:string; choices_reset:boolean; choices:Choice[] };
 export type MenuWeek = { revision:number; entries:MenuEntry[] };
 // Las fechas se calculan como días de calendario. No se usan toISOString ni milisegundos entre días.
 function parseDay(day:string) {
@@ -27,7 +28,7 @@ function client(){if(!supabase)throw new Error('Supabase no configurado');return
 export async function loadMenuWeek(week:string):Promise<MenuWeek> {
   const r=await client().rpc('get_menu_week',{p_week:week});if(r.error)throw r.error;return r.data;
 }
-export type MenuChange = { action:'add'|'replace'|'remove'|'choices'|'ack'; entry?:string; day?:string; meal?:Category; recipe?:string; choices?:Choice[] };
+export type MenuChange = { action:'add'|'replace'|'remove'|'choices'|'ack'; entry?:string; day?:string; meal?:Meal; recipe?:string; choices?:Choice[] };
 export async function changeMenuWeek(week:string,revision:number,change:MenuChange):Promise<MenuWeek> {
   const r=await client().rpc('change_menu_week',{p_week:week,p_revision:revision,p_action:change.action,p_entry:change.entry||null,p_day:change.day||null,p_meal:change.meal||null,p_recipe:change.recipe||null,p_choices:change.choices||[]});
   if(r.error)throw r.error;return r.data;

@@ -35,7 +35,7 @@ test('añade varias apariciones, elige alternativas y sustituye solo una',async(
 
 test('copia entre años y mantiene independientes origen y destino',async({page})=>{
  await page.getByRole('button',{name:'Añadir cena del 2027-01-03'}).click();
- await page.getByRole('combobox',{name:'Categoría',exact:true}).selectOption('');
+ await page.getByRole('combobox',{name:'Etiqueta',exact:true}).selectOption('');
  await page.getByRole('button',{name:/Pollo al horno Con verduras/}).click();
  await page.getByRole('button',{name:'Semana siguiente'}).click();
  await expect(page.getByLabel('Semana del',{exact:true})).toHaveValue('2027-01-04');
