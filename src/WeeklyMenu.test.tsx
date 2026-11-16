@@ -3,6 +3,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 const api=vi.hoisted(()=>({loadMenuWeek:vi.fn(),changeMenuWeek:vi.fn(),copyMenuWeek:vi.fn(),loadRecipeBook:vi.fn()}));
 vi.mock('./menu',async original=>({...await original<typeof import('./menu')>(),loadMenuWeek:api.loadMenuWeek,changeMenuWeek:api.changeMenuWeek,copyMenuWeek:api.copyMenuWeek}));
 vi.mock('./recipes',async original=>({...await original<typeof import('./recipes')>(),loadRecipeBook:api.loadRecipeBook}));
+import { OfflineContext, OfflineWorkspace } from './offline';
 import WeeklyMenu from './WeeklyMenu';
 import { calendarDay, monday } from './menu';
 const current=monday(calendarDay(new Date()));
@@ -42,7 +43,10 @@ it('mantiene datos y ofrece actualizar tras un conflicto de revisión',async()=>
  await waitFor(()=>expect(api.loadMenuWeek).toHaveBeenCalledTimes(2));
 });
 it('desactiva cambios sin conexión',async()=>{
- render(<WeeklyMenu houseId="house" online={false}/>);
+ const workspace=new OfflineWorkspace('weekly-offline','house');
+ await workspace.cache('menu:'+current,{revision:2,entries:[entry]});
+ await workspace.cache('book',{recipes:[recipe],ingredients:[{id:'chicken',name:'Pollo'},{id:'tofu',name:'Tofu'}],photoError:false});
+ render(<OfflineContext.Provider value={workspace}><WeeklyMenu houseId="house" online={false}/></OfflineContext.Provider>);
  expect(await screen.findByRole('button',{name:'Quitar'})).toBeDisabled();
  expect(screen.getByRole('button',{name:'Copiar semana'})).toBeDisabled();
 });

@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { categories, filterRecipes, loadRecipeBook, type Category, type Ingredient, type Recipe } from './recipes';
-import { addDays, calendarDay, changeMenuWeek, copyMenuWeek, dayLabel, loadMenuWeek, monday, weekLabel, type MenuChange, type MenuWeek } from './menu';
+import { categories, filterRecipes, type Category, type Ingredient, type Recipe } from './recipes';
+import { addDays, calendarDay, changeMenuWeek, copyMenuWeek, dayLabel, monday, weekLabel, type MenuChange, type MenuWeek } from './menu';
+import { useOffline } from './offline';
+import { readBook, readMenu } from './offlineResources';
 import WeekNavigation from './WeekNavigation';
 import { useRealtimeRefresh } from './realtime';
 type Selection = { day:string; meal:Category; entry?:string; revision:number };
 export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{houseId:string;online:boolean;selectedWeek?:string;onWeekChange?:(week:string)=>void}) {
+  const workspace=useOffline();
   const [localWeek,setLocalWeek]=useState(()=>monday(calendarDay(new Date())));
   const week=selectedWeek??localWeek;
   const setWeek=onWeekChange??setLocalWeek;
@@ -25,11 +28,11 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
   useEffect(()=>{
     let active=true;const ticket=++generation.current;const key=houseId+week;
     if(loaded.current!==key)setLoading(true);setError('');
-    void Promise.all([loadMenuWeek(week),loadRecipeBook(houseId)]).then(([menu,book])=>{
+    void Promise.all([readMenu(workspace,week,online),readBook(workspace,houseId,online)]).then(([menu,book])=>{
       if(active&&ticket===generation.current){setData(menu);setRecipes(book.recipes);setIngredients(book.ingredients);loaded.current=key;}
-    }).catch(()=>{if(active&&ticket===generation.current){setData({revision:0,entries:[]});setRecipes([]);setIngredients([]);setError('No se ha podido cargar la semana.');}}).finally(()=>{if(active&&ticket===generation.current)setLoading(false);});
+    }).catch(()=>{if(active&&ticket===generation.current){setData({revision:0,entries:[]});setRecipes([]);setIngredients([]);setError(online?'No se ha podido cargar la semana.':'No hay datos guardados para esta semana.');}}).finally(()=>{if(active&&ticket===generation.current)setLoading(false);});
     return ()=>{active=false;};
-  },[houseId,week,retry]);
+  },[houseId,week,retry,online,workspace]);
   useEffect(()=>{
     const refresh=()=>{if(document.visibilityState==='visible'&&!busy&&!selection)setRetry(n=>n+1);};
     document.addEventListener('visibilitychange',refresh);return()=>document.removeEventListener('visibilitychange',refresh);
@@ -38,7 +41,7 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
   const name=(id:string)=>ingredients.find(i=>i.id===id)?.name||'Ingrediente';
   async function change(change:MenuChange,expectedRevision=data.revision) {
     if(disabled)return;generation.current++;setBusy(true);setError('');
-    try{setData(await changeMenuWeek(week,expectedRevision,change));setSelection(null);}
+    try{const result=await changeMenuWeek(week,expectedRevision,change);setData(result);await workspace?.cache('menu:'+week,result);setSelection(null);}
     catch{setError('No se ha podido guardar. Actualiza la semana y reintenta.');}
     finally{setBusy(false);}
   }
@@ -47,7 +50,7 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
     const overwrite=data.entries.length>0;
     if(overwrite&&!window.confirm('¿Sustituir todos los platos de esta semana?'))return;
     generation.current++;setBusy(true);setError('');
-    try{setData(await copyMenuWeek(source,week,data.revision,overwrite));}
+    try{const result=await copyMenuWeek(source,week,data.revision,overwrite);setData(result);await workspace?.cache('menu:'+week,result);}
     catch{setError('No se ha podido copiar. Comprueba que la semana de origen tenga platos y actualiza.');}
     finally{setBusy(false);}
   }

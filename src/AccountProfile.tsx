@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { applyAppearance, avatars, clearAppearance, defaultPreferences, loadPreferences, savePreferences, themes, type Preferences, type Theme } from './preferences';
-export default function AccountProfile({user,online}:{user:User;online:boolean}) {
+export default function AccountProfile({user,online}:{user:Pick<User,'id'|'user_metadata'>;online:boolean}) {
  const name=String(user.user_metadata.full_name||user.user_metadata.name||'Tu perfil');
  const [saved,setSaved]=useState(defaultPreferences),[draft,setDraft]=useState(defaultPreferences);
  const [open,setOpen]=useState(false),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false);

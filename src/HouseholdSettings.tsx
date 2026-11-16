@@ -13,6 +13,7 @@ export default function HouseholdSettings({house,userId,online,onChanged}:{house
  const owner=house.owner_id===userId;
  useRealtimeRefresh(busy||Boolean(confirm),setRetry);
  useEffect(()=>{
+  if(!online){setLoading(false);return;}
   if(house.deletion_requested_at){setMembers([]);setInvites([]);setLoading(false);return;}
   let active=true;
   void (async()=>{
@@ -25,7 +26,7 @@ export default function HouseholdSettings({house,userId,online,onChanged}:{house
    finally{if(active)setLoading(false);}
   })();
   return ()=>{active=false;};
- },[house.id,house.deletion_requested_at,owner,retry]);
+ },[house.id,house.deletion_requested_at,owner,retry,online]);
  useEffect(()=>{setLink('');if(!owner)setConfirm(null);},[owner]);
  async function invitation(id?:string){
   if(busy||!online)return;setBusy(true);setError('');
@@ -55,6 +56,7 @@ export default function HouseholdSettings({house,userId,online,onChanged}:{house
  if(house.deletion_requested_at)return <section aria-label="Eliminación de casa"><h2>{house.name}</h2><p>Eliminación iniciada.</p>{error&&<p role="alert">{error}</p>}<button className="danger" disabled={busy||!online} onClick={()=>void resume()}>{busy?'Eliminando…':'Completar eliminación'}</button></section>;
  return <section aria-label="Gestión de casa">
   <div className="section-heading"><h2>{house.name}</h2><button className="secondary compact" disabled={busy} onClick={()=>setRetry(n=>n+1)}>Actualizar casa</button></div>
+  {!online&&<p role="status">Conéctate para gestionar la casa.</p>}
   {error&&<p role="alert">{error}</p>}
   {loading?<p role="status">Cargando miembros…</p>:<ul className="member-list">{members.map(member=><li key={member.user_id}>
    <div className="member-name"><strong>{member.display_name}{member.user_id===userId?' (Tú)':''}</strong><span>{member.is_owner?'Propietario':'Miembro'}</span></div>

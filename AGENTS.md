@@ -4,7 +4,7 @@
 
 Lee README.md y docs/ESPECIFICACION.md antes de modificar comportamiento. El README obtenido de main incorpora requisitos posteriores al plan inicial: desayuno, alternativas, compra por nombres y perfil/temas. La especificación integra esos cambios; no recuperes reglas antiguas de cantidades o de solo comida/cena.
 
-Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, alternativas, fotos y archivo. Existe menú semanal con alternativas por aparición y copia entre semanas. Existe compra automática por semana con productos manuales, Comprados y sincronización Realtime por casa. Hay gestión de miembros, transferencia, salida y eliminación reanudable de casas. Existe perfil personal con avatar emoji, seis temas y modo claro/oscuro/sistema persistidos bajo RLS. PWA y funcionamiento offline siguen pendientes. Comprueba los scripts de package.json y mantén la documentación sincronizada con cada entrega.
+Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, alternativas, fotos y archivo. Existe menú semanal con alternativas por aparición y copia entre semanas. Existe compra automática por semana con productos manuales, Comprados y sincronización Realtime por casa. Hay gestión de miembros, transferencia, salida y eliminación reanudable de casas. Existe perfil personal con avatar emoji, seis temas y modo claro/oscuro/sistema persistidos bajo RLS. Existe shell PWA instalable y consulta offline de carta, semanas y compra visitadas. Las marcas de compra se guardan en IndexedDB y se sincronizan con recibos idempotentes. Queda validar instalación y uso en dispositivos reales y Supabase remoto. Comprueba los scripts de package.json y mantén la documentación sincronizada con cada entrega.
 
 ## Forma de trabajar
 
@@ -30,6 +30,8 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 - La compra se reconcilia en el servidor dentro de la transacción del menú/receta. Conserva las marcas mientras el producto siga siendo necesario; eliminarlo y reintroducirlo crea otra identidad y rechaza marcas antiguas.
 - Realtime publica contadores household_changes y user_household_changes bajo RLS; los avisos personales permiten retirar vistas cuando se pierde pertenencia. Aplaza las recargas durante la edición y conserva la revisión original del borrador.
 - Eliminar una casa exige confirmar su nombre. Bloquea el acceso antes de limpiar fotos por Storage API y elimina los datos solo al terminar; permite reanudar. Nunca borres archivos modificando storage.objects mediante SQL.
+- Vincula la caché y las marcas a usuario, casa y `membership_id`; una nueva pertenencia a la misma casa no recupera datos ni pendientes antiguos. Usa Web Locks para serializar envíos entre pestañas y conserva el UUID de operación al reintentar. Los recibos de compra no se eliminan al retirar productos.
+- El service worker solo precachea recursos públicos del build; las respuestas autenticadas, fotos y URLs firmadas nunca entran en Cache Storage.
 - Separa cachés privadas por usuario/casa; limpia cachés y pendientes al cerrar sesión o perder acceso. No des por sincronizada una operación solo por haberla guardado localmente.
 
 ## Comprobaciones y comunicación

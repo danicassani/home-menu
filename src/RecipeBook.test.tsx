@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { beforeEach, expect, it, vi } from 'vitest';
 const api=vi.hoisted(()=>({loadRecipeBook:vi.fn(),saveRecipe:vi.fn(),archiveRecipe:vi.fn(),addIngredient:vi.fn(),uploadPhoto:vi.fn()}));
 vi.mock('./recipes',async importOriginal=>({...await importOriginal<typeof import('./recipes')>(),...api}));
+import { OfflineContext, OfflineWorkspace } from './offline';
 import RecipeBook from './RecipeBook';
 import { HouseholdUpdates } from './realtime';
 import type { Recipe } from './recipes';
@@ -68,9 +69,12 @@ it('solo archiva tras confirmación y admite restaurar desde Archivados',async()
 });
 it('permite reintentar un fallo de carga y desactiva edición offline',async()=>{
  api.loadRecipeBook.mockRejectedValueOnce(new Error('offline'));
- render(<RecipeBook houseId="house" online={false}/>);
+ const workspace=new OfflineWorkspace('recipe-offline','house');
+ const {rerender}=render(<OfflineContext.Provider value={workspace}><RecipeBook houseId="house" online/></OfflineContext.Provider>);
  const alert=await screen.findByRole('alert');
  fireEvent.click(within(alert).getByRole('button',{name:'Reintentar'}));
+ await screen.findByRole('button',{name:/Pollo al horno/});
+ rerender(<OfflineContext.Provider value={workspace}><RecipeBook houseId="house" online={false}/></OfflineContext.Provider>);
  expect(await screen.findByRole('button',{name:'Nuevo plato'})).toBeDisabled();
 });
 
