@@ -20,6 +20,9 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 
 - Navegación entre Carta, Semana, Compra y Casa en una barra inferior fija de cuatro iconos sin texto visible. Mantén etiquetas accesibles, foco, selección y espacio para que la barra no tape controles ni áreas seguras del móvil.
 
+- El cierre de sesión solo aparece dentro del perfil; la X del diálogo no cierra sesión. Conserva el acceso al perfil incluso cuando cargan o fallan sus preferencias.
+- Fotos: selector con icono de cámara y encuadre ajustable antes de subir. Cancelar conserva la foto anterior; nunca subas el original al confirmar el encuadre. Ingredientes: alternativa y borrador para quitar en la misma fila.
+
 ## Implementación
 
 - React, TypeScript estricto, Vite y Tailwind; Cloudflare Pages y Supabase. Prefiere herramientas y scripts ya presentes; utiliza el lockfile y no mezcles gestores.

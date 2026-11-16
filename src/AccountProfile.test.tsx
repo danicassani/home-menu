@@ -46,3 +46,19 @@ it('limpia la apariencia al desmontar y desactiva el guardado offline',async()=>
  expect(screen.getByRole('button',{name:'Guardar perfil'})).toBeDisabled();unmount();
  expect(document.documentElement.dataset.theme).toBeUndefined();expect(document.documentElement.style.getPropertyValue('--primary')).toBe('');
 });
+it('distingue cerrar el perfil de cerrar sesión y permite salir sin conexión',async()=>{
+ const signOut=vi.fn().mockResolvedValue(null);
+ render(<AccountProfile user={user} online={false} onSignOut={signOut}/>);await open();
+ fireEvent.click(screen.getByRole('button',{name:'Cerrar perfil'}));expect(signOut).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole('button',{name:'Abrir perfil de Alex'}));fireEvent.click(screen.getByRole('button',{name:'Cerrar sesión'}));
+ await waitFor(()=>expect(signOut).toHaveBeenCalledTimes(1));expect(api.savePreferences).not.toHaveBeenCalled();
+});
+it('permite cerrar sesión aunque las preferencias no se hayan podido cargar',async()=>{
+ api.loadPreferences.mockRejectedValue(new Error('network'));
+ const signOut=vi.fn().mockResolvedValue('No se ha podido cerrar la sesión.');
+ render(<AccountProfile user={user} online onSignOut={signOut}/>);await open();
+ expect(screen.getByRole('button',{name:'Guardar perfil'})).toBeDisabled();
+ fireEvent.click(screen.getByRole('button',{name:'Cerrar sesión'}));
+ await waitFor(()=>expect(screen.getByRole('alert')).toHaveTextContent('No se ha podido cerrar la sesión.'));
+ expect(screen.getByRole('dialog',{name:'Perfil'})).toBeVisible();
+});

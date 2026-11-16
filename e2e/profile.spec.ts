@@ -43,7 +43,7 @@ test('respeta el sistema, permite fijar el modo y limpia preferencias al cerrar 
  const dialog=page.getByRole('dialog',{name:'Perfil'});await dialog.getByRole('switch',{name:'Modo oscuro'}).uncheck();
  await dialog.getByRole('button',{name:'Guardar perfil'}).click();await expect(page.locator('html')).toHaveAttribute('data-mode','light');
  await page.emulateMedia({colorScheme:'light'});await page.emulateMedia({colorScheme:'dark'});await expect(page.locator('html')).toHaveAttribute('data-mode','light');
- await page.getByRole('button',{name:'Cerrar sesión',exact:true}).click();
+ await page.getByRole('button',{name:'Abrir perfil de Alex',exact:true}).click();await page.getByRole('dialog',{name:'Perfil',exact:true}).getByRole('button',{name:'Cerrar sesión',exact:true}).click();
  await expect(page.getByRole('heading',{name:"Olvida el 'qué comemos'"})).toBeVisible();
  await expect(page.locator('html')).not.toHaveAttribute('data-theme');await expect(page.locator('html')).not.toHaveAttribute('data-mode');
 });

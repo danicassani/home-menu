@@ -1,0 +1,37 @@
+import { test, expect } from '@playwright/test';
+import { setupApp } from './fixtures';
+const tiny=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64');
+test('encuadra con zoom y teclado y sube los píxeles elegidos, sin subir el original',async({page},testInfo)=>{
+ await setupApp(page);await page.getByRole('button',{name:'Nuevo plato'}).click();
+ const camera=page.getByRole('button',{name:'Añadir o cambiar foto'});expect((await camera.innerText()).trim()).toBe('');
+ const source=await page.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=800;canvas.height=400;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#ff0000';ctx.fillRect(0,0,400,400);ctx.fillStyle='#0000ff';ctx.fillRect(400,0,400,400);return canvas.toDataURL('image/png').split(',')[1];});
+ await page.getByLabel('Foto (opcional)').setInputFiles({name:'original.png',mimeType:'image/png',buffer:Buffer.from(source,'base64')});
+ const dialog=page.getByRole('dialog',{name:'Encuadrar foto'});await expect(dialog.getByRole('button',{name:'Usar foto'})).toBeEnabled();
+ const zoom=dialog.getByRole('slider',{name:'Zoom'});await zoom.focus();await page.keyboard.press('End');await expect(zoom).toHaveValue('3');
+ const frame=dialog.getByRole('group',{name:'Mover imagen'});await frame.focus();for(let n=0;n<30;n++)await page.keyboard.press('ArrowLeft');
+ await page.screenshot({path:testInfo.outputPath('encuadre.png')});
+ let uploaded:Buffer|undefined;
+ page.on('request',request=>{if(request.method()==='POST'&&request.url().includes('/storage/v1/object/recipe-photos/')){const body=request.postDataBuffer()!;const start=body.indexOf(Buffer.from([255,216]));const end=body.lastIndexOf(Buffer.from([255,217]));if(start>=0&&end>start)uploaded=body.subarray(start,end+2);}});
+ await dialog.getByRole('button',{name:'Usar foto'}).click();await expect(dialog).not.toBeVisible();
+ await page.getByLabel('Nombre del plato').fill('Foto encuadrada');await page.getByLabel('Receta',{exact:true}).fill('Cocinar.');
+ await page.getByRole('button',{name:'Añadir ingrediente',exact:true}).click();await page.getByRole('button',{name:'Pollo',exact:true}).click();
+ const add=page.getByRole('button',{name:'Añadir alternativa',exact:true}),remove=page.getByRole('button',{name:'Quitar Pollo',exact:true});
+ const [left,right]=await Promise.all([add.boundingBox(),remove.boundingBox()]);expect(Math.abs(left!.y-right!.y)).toBeLessThan(2);expect(left!.x+left!.width).toBeLessThanOrEqual(right!.x);expect((await remove.innerText()).trim()).toBe('');
+ await page.screenshot({path:testInfo.outputPath('editor-compacto.png'),fullPage:true});
+ await page.getByRole('button',{name:'Guardar plato'}).click();await expect(page.getByRole('button',{name:/Foto encuadrada/})).toBeVisible();
+ await expect.poll(()=>Boolean(uploaded)).toBe(true);
+ const actual=await page.evaluate(async encoded=>{const image=await createImageBitmap(new Blob([Uint8Array.from(atob(encoded),c=>c.charCodeAt(0))],{type:'image/jpeg'}));const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const ctx=canvas.getContext('2d')!;ctx.drawImage(image,0,0);const pixel=Array.from(ctx.getImageData(Math.floor(image.width/2),Math.floor(image.height/2),1,1).data);return {width:image.width,height:image.height,pixel};},uploaded!.toString('base64'));
+ expect(actual.width).toBeLessThan(800);expect(actual.width/actual.height).toBeCloseTo(4/3,1);expect(actual.pixel[2]).toBeGreaterThan(240);expect(actual.pixel[0]).toBeLessThan(15);
+});
+test('cancelar, Escape y una imagen inválida conservan la foto anterior sin subir nada',async({page})=>{
+ await setupApp(page);await page.getByRole('button',{name:'Nuevo plato'}).click();
+ let uploads=0;page.on('request',request=>{if(request.method()==='POST'&&request.url().includes('/storage/v1/object/recipe-photos/'))uploads++;});
+ const input=page.getByLabel('Foto (opcional)');await input.setInputFiles({name:'a.png',mimeType:'image/png',buffer:tiny});
+ await page.getByRole('dialog',{name:'Encuadrar foto'}).getByRole('button',{name:'Usar foto'}).click();
+ const before=await page.getByRole('img',{name:'Foto del plato',exact:true}).getAttribute('src');
+ await input.setInputFiles({name:'b.png',mimeType:'image/png',buffer:tiny});await page.getByRole('dialog',{name:'Encuadrar foto'}).getByRole('button',{name:'Cancelar',exact:true}).click();
+ expect(await page.getByRole('img',{name:'Foto del plato',exact:true}).getAttribute('src')).toBe(before);
+ await page.getByRole('button',{name:'Ajustar encuadre'}).click();await page.keyboard.press('Escape');await expect(page.getByRole('dialog',{name:'Encuadrar foto'})).not.toBeVisible();
+ await input.setInputFiles({name:'rota.png',mimeType:'image/png',buffer:Buffer.from('no es una imagen')});await expect(page.getByRole('dialog').getByRole('alert')).toContainText('No se ha podido abrir');
+ await expect(page.getByRole('button',{name:'Usar foto'})).toBeDisabled();await page.keyboard.press('Escape');expect(uploads).toBe(0);
+});

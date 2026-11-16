@@ -14,7 +14,7 @@ test('navega con iconos en la barra fija y deja libres los controles inferiores'
   await expect(page.getByRole('region',{name:region,exact:true})).toBeVisible();
  }
  await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
- const footer=page.getByRole('button',{name:'Cerrar sesión',exact:true});
+ const footer=page.getByRole('button',{name:/Pollo al horno/});
  await expect(footer).toBeInViewport();
  const [bar,button]=await Promise.all([nav.boundingBox(),footer.boundingBox()]);
  expect(button!.y+button!.height).toBeLessThanOrEqual(bar!.y);

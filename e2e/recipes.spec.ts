@@ -46,6 +46,7 @@ test('sube una foto, la muestra en la ficha y permite quitarla',async({page})=>{
  await page.getByLabel('Nombre del plato').fill('Plato con foto');
  await page.getByLabel('Receta',{exact:true}).fill('Cocinar.');
  await page.getByLabel('Foto (opcional)').setInputFiles({name:'foto.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')});
+ await page.getByRole('dialog',{name:'Encuadrar foto'}).getByRole('button',{name:'Usar foto'}).click();
  await page.getByRole('button',{name:'Añadir ingrediente',exact:true}).click();
  await page.getByRole('button',{name:'Pollo',exact:true}).click();
  await page.getByRole('button',{name:'Guardar plato'}).click();

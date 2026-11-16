@@ -4,7 +4,7 @@ const auth = vi.hoisted(() => ({ getSession: vi.fn(), onAuthStateChange: vi.fn()
 vi.mock('./supabase', () => ({ supabase: { auth } }));
 vi.mock('./InstallApp',()=>({default:()=>null}));
 vi.mock('./Household', () => ({ default: () => null }));
-vi.mock('./AccountProfile',()=>({default:()=>null}));
+vi.mock('./AccountProfile',()=>({default:({onSignOut}:{onSignOut:()=>Promise<string|null>})=><button onClick={()=>void onSignOut()}>Cerrar sesión</button>}));
 import App from './App';
 beforeEach(() => {
   Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
