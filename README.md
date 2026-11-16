@@ -63,7 +63,7 @@ npm run preview
 
 Cloudflare Pages: comando de build `npm run build`, directorio de salida `dist`, Node.js 22 o posterior y las dos variables públicas configuradas antes de compilar. `public/_redirects` permite rutas de SPA. Esta entrega no despliega automáticamente.
 
-**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. También hay gestión de miembros, transferencia, salida y eliminación de casas. Pendientes: perfil/temas y PWA/offline. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
+**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. También hay gestión de miembros, transferencia, salida y eliminación de casas. También hay perfil personal, avatar emoji y temas claro/oscuro. Pendientes: PWA/offline. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
 
 Antes de desplegar esta entrega, aplica `supabase/migrations/202611140001_households.sql` una sola vez en el SQL Editor de Supabase. No contiene datos de ejemplo. Activa RLS y limita las escrituras a funciones transaccionales. No se ha aplicado automáticamente. Las pruebas SQL se ejecutan contra PostgreSQL local embebido (PGlite) con roles Auth simulados, sin conectarse a producción. Las pruebas de interfaz simulan el cliente Supabase.
 
@@ -130,3 +130,14 @@ Eliminar casa exige escribir su nombre. La eliminación tiene dos fases: se bloq
 Los avisos personales contienen solo el identificador propio y un contador. Siguen llegando cuando una expulsión o eliminación ya impide leer el contador de la casa, para retirar las vistas privadas sin recargar. Se cancelan las lecturas anteriores al cambiar el estado de acceso; cerrar sesión elimina todas las suscripciones. Las fotos se limpian por lotes y subcarpetas, con detección de fallos o falta de progreso. La finalización rechaza una casa si todavía tiene fotos registradas.
 
 Las pruebas locales validan permisos, transferencias, salida, revocación de enlaces, aislamiento, eliminación de datos y conservación de cuentas/otras casas. El servicio de limpieza se prueba con más de 100 archivos, subcarpetas y errores. Playwright comprueba dos sesiones, retirada de acceso en directo y reanudación tras un fallo de Storage. Auth/Storage y WebSocket están simulados; la migración no se ha aplicado ni validado en el proyecto remoto.
+
+
+### Perfil y apariencia
+
+El nombre y avatar de la cabecera abren el perfil. Permite elegir la inicial o uno de 16 emojis, seis temas (blanco, azul, rojo, rosa, verde y amarillo) y modo Sistema, Claro u Oscuro. Por defecto usa blanco y el modo del dispositivo. La selección se previsualiza; Cancelar o Escape restaura lo guardado. Un error al guardar conserva el borrador para reintentar.
+
+Las preferencias se guardan por cuenta en `user_preferences`, con políticas RLS de lectura y escritura exclusivas del usuario. Son independientes de la casa. Se recuperan al iniciar sesión y al volver a la pestaña; el aspecto personal se retira al cerrar sesión. Cambiar el perfil requiere conexión; no existe caché local de preferencias.
+
+**Nueva migración:** aplicar una sola vez `supabase/migrations/202611160003_profile_preferences.sql` después de las cinco anteriores, antes de fusionar/desplegar. No repetir migraciones ya aplicadas. No necesita nuevas variables, secretos ni funciones Edge. Esta migración no se ha ejecutado en el proyecto remoto.
+
+Las pruebas locales verifican aislamiento entre cuentas, permisos anónimos, valores admitidos y borrado en cascada con la cuenta. También cubren contraste del texto en las doce combinaciones, previsualización, cancelación, errores y desconexión. Playwright comprueba persistencia tras recarga, modo del sistema, navegación por teclado, cierre de sesión y cuentas independientes en tamaños móvil y escritorio con Supabase simulado; no sustituye la validación en dispositivos reales.

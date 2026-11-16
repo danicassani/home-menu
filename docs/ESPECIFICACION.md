@@ -2,7 +2,7 @@
 
 ## Estado y objetivo
 
-Documento para implementar una PWA móvil en español que permita a varios hogares independientes compartir platos, planificar la semana y comprar sus ingredientes. Actualmente existe una base React con portada, acceso Google, sesión y pruebas de cliente. Existen creación de casas e invitaciones caducables/revocables y una carta de platos con catálogo, alternativas, fotos privadas y archivo/restauración. También hay menú semanal con sustitución, alternativas por aparición y copia entre semanas. También existe compra automática con productos manuales, Comprados y sincronización por casa. También están implementadas la gestión de miembros, salida, transferencia y eliminación reanudable de casas. La validación en Supabase remoto sigue pendiente.
+Documento para implementar una PWA móvil en español que permita a varios hogares independientes compartir platos, planificar la semana y comprar sus ingredientes. Actualmente existe una base React con portada, acceso Google, sesión y pruebas de cliente. Existen creación de casas e invitaciones caducables/revocables y una carta de platos con catálogo, alternativas, fotos privadas y archivo/restauración. También hay menú semanal con sustitución, alternativas por aparición y copia entre semanas. También existe compra automática con productos manuales, Comprados y sincronización por casa. También están implementadas la gestión de miembros, salida, transferencia y eliminación reanudable de casas. También existe perfil personal con avatar emoji y preferencias de tema/modo persistidas por cuenta. PWA, funcionamiento offline y validación en Supabase remoto siguen pendientes.
 
 El README actualizado desde `main` es la referencia funcional más reciente. Sustituye estas decisiones de la conversación inicial: el menú incluye desayuno, la compra muestra nombres sin cantidades y la primera versión incorpora alternativas, kilocalorías opcionales y personalización visual. No se debe implementar la suma de cantidades del plan anterior.
 
@@ -63,6 +63,8 @@ Interfaz estética, sencilla, accesible y pensada para móviles: tarjetas, color
 - Nombre inicial obtenido de Google y opción para elegir un emoji como avatar personal.
 - Modo claro u oscuro y tema blanco, azul, rojo, rosa, verde o amarillo, cada uno con ambas variantes.
 - Persistir preferencias por usuario, aplicarlas entre sesiones y mantener contraste legible en todas las combinaciones. Predeterminado: tema blanco y modo del sistema hasta que el usuario elija claro u oscuro.
+- Implementado con `user_preferences` y RLS privada por cuenta. Ofrece inicial o 16 emojis; previsualizar no guarda hasta confirmar. Cancelar/Escape restaura el aspecto guardado, un error conserva el borrador. Requiere conexión y recarga preferencias al volver a la pestaña.
+- Retirar preferencias visuales al cerrar sesión; no almacenar preferencias privadas en caché local.
 
 ### Instalación y desconexión
 
