@@ -7,6 +7,8 @@ Los usuarios podrán crear platos a mano y clasificarlos como **desayuno, comida
 
 ## Ingredientes y alternativas
 
+En cada ingrediente, Añadir alternativa y el icono de borrador para quitarlo comparten una fila de acciones.
+
 Al crear una receta, el botón **+** debajo del título **Ingredientes** abrirá un desplegable con un buscador para reutilizar ingredientes ya registrados en la aplicación. La opción **Nuevo ingrediente** abrirá un formulario con el **nombre** como campo obligatorio y las **kilocalorías por cada 100 g** como campo opcional.
 
 Algunos ingredientes de una receta podrán tener alternativas seleccionables manualmente. Por ejemplo, un plato con carne, pollo o pescado podrá ofrecer una versión vegetariana con **soja texturizada, seitán, tofu o garbanzos**, según la receta.
@@ -32,6 +34,8 @@ Tanto el registro como el inicio de sesión se harán con **Google** mediante Su
 Las vistas Carta, Semana, Compra y Casa se abren desde una barra inferior fija con cuatro iconos, sin texto visible: plato con cubiertos, calendario, carrito y casa. Conservan etiquetas para lectores de pantalla, foco de teclado y una marca de vista activa. La barra respeta el área segura del móvil y deja espacio para los controles al final de cada vista.
 
 ## Perfil y apariencia
+
+Cerrar sesión está únicamente dentro del perfil y sigue disponible sin conexión o si falla la carga de preferencias. La X cierra la ventana sin salir de la cuenta.
 
 El nombre del usuario y su avatar aparecerán en la esquina superior derecha. Al pulsar el avatar se abrirá el perfil, donde cada usuario podrá elegir un **emoji como avatar**, cambiar entre **modo claro y oscuro** y seleccionar un tema de color. Los temas disponibles serán **blanco, azul, rojo, rosa, verde y amarillo**, cada uno con su variante clara y oscura.
 
@@ -76,7 +80,7 @@ Antes de desplegar esta entrega, aplica `supabase/migrations/202611140001_househ
 
 La sección Carta permite crear y editar platos, filtrar por nombre y categoría, consultar la ficha y archivar/restaurar. El selector + reutiliza ingredientes del hogar y permite crearlos con kcal opcionales. Cada ingrediente admite alternativas del mismo catálogo. Las elecciones por día se incorporarán con la planificación semanal.
 
-Las fotos son opcionales, privadas y de hasta 5 MB (JPEG, PNG o WebP). Se muestran mediante enlaces firmados de una hora; Actualizar renueva los enlaces. Editar una versión antigua de un plato falla conservando el borrador, para evitar sobrescribir cambios de otro miembro.
+Las fotos son opcionales, privadas y de hasta 5 MB (JPEG, PNG o WebP). El icono de cámara abre el selector; antes de adjuntar se ajusta el encuadre 4:3 con arrastre, gesto de pinza, flechas del teclado y zoom. Se genera un JPEG de hasta 1600 × 1200, sin ampliar imágenes pequeñas, y solo se sube al guardar el plato. Cancelar conserva la foto anterior; el icono de recorte permite reajustarla. Se muestran mediante enlaces firmados de una hora; Actualizar renueva los enlaces. Editar una versión antigua de un plato falla conservando el borrador, para evitar sobrescribir cambios de otro miembro.
 
 **Migraciones:** aplicar una sola vez, en este orden:
 

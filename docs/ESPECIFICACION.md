@@ -26,12 +26,14 @@ Interfaz estética, sencilla, accesible y pensada para móviles: tarjetas, color
 - Tarjetas con nombre, foto y descripción. La ficha presenta foto, descripción, ingredientes y receta, en ese orden; omitir la foto cuando no exista.
 - Buscar platos por nombre y filtrar por categoría. No es obligatorio introducir etiquetas, tiempos ni raciones para esta primera versión.
 - Archivar platos los retira de nuevas selecciones, conservando referencias desde menús existentes.
+- El selector de foto es un icono de cámara sin texto visible. Permite mover y ampliar el encuadre 4:3 con ratón, táctil o teclado, confirmar/cancelar y reajustar. Solo se sube el JPEG generado al guardar el plato; cancelar conserva la foto anterior.
 - Las fotos son privadas de la casa; validar formato y tamaño tanto en la interfaz como en almacenamiento. Para v1: JPEG, PNG o WebP y máximo 5 MB.
 
 ### Ingredientes y alternativas
 
 - El botón + bajo Ingredientes abre un desplegable con buscador para reutilizar ingredientes de la casa.
 - Nuevo ingrediente solicita nombre obligatorio y kilocalorías por 100 g opcionales, numéricas y no negativas. No calcular nutrición de platos en v1.
+- Añadir alternativa y el icono de borrador para quitar el ingrediente se sitúan juntos en una fila compacta, con nombres accesibles.
 - Catálogo privado de cada casa: reutilizar identidades de ingredientes y evitar duplicados por nombre normalizado (espacios exteriores y mayúsculas). No fusionar automáticamente sinónimos.
 - Cada ingrediente de una receta puede ofrecer alternativas manuales que referencian el mismo catálogo. Ejemplos: soja texturizada, seitán, tofu o garbanzos.
 - Por defecto se usa el ingrediente original. Elegir una alternativa para un plato planificado afecta solo a esa aparición; no modifica la receta ni otros días.
@@ -59,6 +61,7 @@ Interfaz estética, sencilla, accesible y pensada para móviles: tarjetas, color
 
 ### Perfil y apariencia
 
+- Cerrar sesión aparece únicamente dentro del perfil, disponible incluso offline o con error de preferencias. La X cierra el diálogo y descarta la previsualización sin cerrar sesión.
 - Nombre y avatar en la esquina superior derecha; pulsar abre el perfil.
 - Nombre inicial obtenido de Google y opción para elegir un emoji como avatar personal.
 - Temas blanco, azul, rojo, rosa, verde o amarillo mediante botones de color sin nombres visibles, con etiquetas accesibles y marca de selección. Interruptor «Modo oscuro» acompañado de un sol: activado oscuro, desactivado claro.

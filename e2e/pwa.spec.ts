@@ -19,7 +19,7 @@ test('instala el shell, recarga offline y no guarda respuestas privadas en Cache
 });
 test('cerrar sesión offline elimina instantáneas y cola privadas',async({page,context})=>{
  const state=await setupApp(page);await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
- state.networkOffline=true;await context.setOffline(true);await page.getByRole('button',{name:'Cerrar sesión',exact:true}).click();
+ state.networkOffline=true;await context.setOffline(true);await page.getByRole('button',{name:'Abrir perfil de Alex',exact:true}).click();await page.getByRole('dialog',{name:'Perfil',exact:true}).getByRole('button',{name:'Cerrar sesión',exact:true}).click();
  await expect(page.getByRole('button',{name:/Continuar con Google/})).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>new Promise<number>((resolve,reject)=>{const r=indexedDB.open('home-menu-private');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result;const count=db.transaction('data').objectStore('data').count();count.onsuccess=()=>{resolve(count.result);db.close();};};}))).toBe(0);
 });
