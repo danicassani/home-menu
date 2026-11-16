@@ -63,7 +63,7 @@ it('solo archiva tras confirmación y admite restaurar desde Archivados',async()
  fireEvent.click(screen.getByRole('button',{name:'Archivar plato'}));
  await screen.findByLabelText('Archivados');
  fireEvent.click(screen.getByLabelText('Archivados'));
- fireEvent.click(screen.getByRole('button',{name:/Pollo al horno/}));
+ fireEvent.click(await screen.findByRole('button',{name:/Pollo al horno/}));
  expect(screen.getByRole('button',{name:'Restaurar plato'})).toBeInTheDocument();confirm.mockRestore();
 });
 it('permite reintentar un fallo de carga y desactiva edición offline',async()=>{

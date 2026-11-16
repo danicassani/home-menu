@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 const mock=vi.hoisted(()=>({from:vi.fn(),rpc:vi.fn()}));
 vi.mock('./supabase',()=>({supabase:mock}));
+vi.mock('./realtime',async original=>({...await original<typeof import('./realtime')>(),useHouseholdRealtime:()=>({revision:0,status:'live'})}));
+vi.mock('./realtime',async original=>({...await original<typeof import('./realtime')>(),useHouseholdRealtime:()=>({revision:0,status:'live'})}));
 import Household from './Household';
 beforeEach(()=>{
  sessionStorage.clear();

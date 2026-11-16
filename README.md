@@ -63,7 +63,7 @@ npm run preview
 
 Cloudflare Pages: comando de build `npm run build`, directorio de salida `dist`, Node.js 22 o posterior y las dos variables públicas configuradas antes de compilar. `public/_redirects` permite rutas de SPA. Esta entrega no despliega automáticamente.
 
-**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. Pendientes: transferencias, expulsiones, salida/eliminación de casas, perfil/temas y PWA/offline. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
+**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. También hay gestión de miembros, transferencia, salida y eliminación de casas. Pendientes: perfil/temas y PWA/offline. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
 
 Antes de desplegar esta entrega, aplica `supabase/migrations/202611140001_households.sql` una sola vez en el SQL Editor de Supabase. No contiene datos de ejemplo. Activa RLS y limita las escrituras a funciones transaccionales. No se ha aplicado automáticamente. Las pruebas SQL se ejecutan contra PostgreSQL local embebido (PGlite) con roles Auth simulados, sin conectarse a producción. Las pruebas de interfaz simulan el cliente Supabase.
 
@@ -117,3 +117,16 @@ Las marcas se conservan mientras el ingrediente siga siendo necesario. Si desapa
 Realtime avisa de cambios en carta, menú, compra e invitaciones; cada cliente recarga los datos autorizados de su casa. No se envían recetas ni productos en el aviso. Los eventos se agrupan y las recargas se aplazan mientras se edita o guarda, sin sustituir el borrador ni su revisión. Se recupera el estado al suscribirse/reconectar. Si falla el canal, se actualiza cada 15 segundos; cada minuto se revalida el estado incluso con el canal activo. Al salir o cambiar de casa se retira la suscripción.
 
 Las pruebas SQL comprueban derivación, permisos, conservación de marcas, identidades nuevas, copias y publicación. Playwright usa el cliente Supabase real con HTTP y WebSocket simulados, incluyendo dos sesiones en contextos independientes. Esto no sustituye la comprobación del proyecto Supabase desplegado tras aplicar la migración. Sin conexión las escrituras siguen deshabilitadas: el almacenamiento offline se implementará en otra entrega.
+
+
+## Gestión de casa
+
+Casa muestra los miembros y el propietario. El propietario puede quitar miembros y transferir la propiedad a otro miembro existente. Los miembros pueden salir; el propietario debe transferir primero o eliminar la casa. Quitar un miembro y transferir la propiedad revocan los enlaces de invitación activos. Todas estas acciones requieren confirmación y autorización en PostgreSQL.
+
+Eliminar casa exige escribir su nombre. La eliminación tiene dos fases: se bloquea la casa y se libera la pertenencia de los demás miembros; el propietario limpia sus fotos mediante Storage API y después se eliminan los datos de la casa en una transacción. No se borran cuentas de Google/Supabase. Si falla o se cierra el navegador, el propietario ve Completar eliminación al volver. Una eliminación iniciada se puede reanudar, pero no cancelar porque parte de las fotos puede haberse borrado. Los demás miembros pueden crear o unirse a otra casa mientras termina.
+
+**Nueva migración:** aplicar una sola vez `supabase/migrations/202611160002_household_management.sql` después de las cuatro anteriores, antes de fusionar/desplegar. No repetir migraciones aplicadas. Añade estado de eliminación, funciones de administración y avisos personales `user_household_changes` bajo RLS, publicados en `supabase_realtime`. Ajusta el orden de bloqueo de escrituras e invitaciones. No necesita nuevas variables, secretos ni funciones Edge.
+
+Los avisos personales contienen solo el identificador propio y un contador. Siguen llegando cuando una expulsión o eliminación ya impide leer el contador de la casa, para retirar las vistas privadas sin recargar. Se cancelan las lecturas anteriores al cambiar el estado de acceso; cerrar sesión elimina todas las suscripciones. Las fotos se limpian por lotes y subcarpetas, con detección de fallos o falta de progreso. La finalización rechaza una casa si todavía tiene fotos registradas.
+
+Las pruebas locales validan permisos, transferencias, salida, revocación de enlaces, aislamiento, eliminación de datos y conservación de cuentas/otras casas. El servicio de limpieza se prueba con más de 100 archivos, subcarpetas y errores. Playwright comprueba dos sesiones, retirada de acceso en directo y reanudación tras un fallo de Storage. Auth/Storage y WebSocket están simulados; la migración no se ha aplicado ni validado en el proyecto remoto.
