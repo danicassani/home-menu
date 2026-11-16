@@ -288,3 +288,7 @@ button.danger { color: var(--onDanger); }
 @media(max-width: 380px) { .profile-dialog { padding: 22px 18px; } .emoji-options { gap: 6px; } }
 
 .avatar-option > span, .theme-option > span { pointer-events: none; }
+
+.pwa-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding-bottom: 24px; }
+.pwa-actions:empty { display: none; }
+.pwa-actions button, .pwa-actions p { width: auto; margin: 0; }

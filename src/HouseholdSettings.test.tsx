@@ -38,6 +38,8 @@ it('ofrece reanudar una eliminación sin recuperar datos de la casa',async()=>{
  await waitFor(()=>expect(api.deleteHousehold).toHaveBeenCalledWith(pending,'Casa'));
 });
 it('desactiva acciones de administración sin conexión',async()=>{
- render(<HouseholdSettings house={house} userId="owner" online={false} onChanged={changed}/>);
+ const {rerender}=render(<HouseholdSettings house={house} userId="owner" online onChanged={changed}/>);
+ await screen.findByRole('button',{name:'Quitar a Sam'});
+ rerender(<HouseholdSettings house={house} userId="owner" online={false} onChanged={changed}/>);
  expect(await screen.findByRole('button',{name:'Quitar a Sam'})).toBeDisabled();expect(screen.getByRole('button',{name:'Eliminar casa'})).toBeDisabled();
 });

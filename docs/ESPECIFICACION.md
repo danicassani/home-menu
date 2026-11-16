@@ -2,7 +2,7 @@
 
 ## Estado y objetivo
 
-Documento para implementar una PWA móvil en español que permita a varios hogares independientes compartir platos, planificar la semana y comprar sus ingredientes. Actualmente existe una base React con portada, acceso Google, sesión y pruebas de cliente. Existen creación de casas e invitaciones caducables/revocables y una carta de platos con catálogo, alternativas, fotos privadas y archivo/restauración. También hay menú semanal con sustitución, alternativas por aparición y copia entre semanas. También existe compra automática con productos manuales, Comprados y sincronización por casa. También están implementadas la gestión de miembros, salida, transferencia y eliminación reanudable de casas. También existe perfil personal con avatar emoji y preferencias de tema/modo persistidas por cuenta. PWA, funcionamiento offline y validación en Supabase remoto siguen pendientes.
+Documento para implementar una PWA móvil en español que permita a varios hogares independientes compartir platos, planificar la semana y comprar sus ingredientes. Actualmente existe una base React con portada, acceso Google, sesión y pruebas de cliente. Existen creación de casas e invitaciones caducables/revocables y una carta de platos con catálogo, alternativas, fotos privadas y archivo/restauración. También hay menú semanal con sustitución, alternativas por aparición y copia entre semanas. También existe compra automática con productos manuales, Comprados y sincronización por casa. También están implementadas la gestión de miembros, salida, transferencia y eliminación reanudable de casas. También existe perfil personal con avatar emoji y preferencias de tema/modo persistidas por cuenta. Existe shell PWA instalable, consulta offline de datos visitados y cola persistente de marcas de compra. Queda validar Supabase remoto e instalación/uso en dispositivos reales.
 
 El README actualizado desde `main` es la referencia funcional más reciente. Sustituye estas decisiones de la conversación inicial: el menú incluye desayuno, la compra muestra nombres sin cantidades y la primera versión incorpora alternativas, kilocalorías opcionales y personalización visual. No se debe implementar la suma de cantidades del plan anterior.
 
@@ -67,6 +67,11 @@ Interfaz estética, sencilla, accesible y pensada para móviles: tarjetas, color
 - Retirar preferencias visuales al cerrar sesión; no almacenar preferencias privadas en caché local.
 
 ### Instalación y desconexión
+
+Implementado: manifest e iconos, instalación mediante navegador, service worker de recursos públicos y snapshots/cola en IndexedDB. Se conservan solo los textos de la carta y semanas ya visitadas; las fotos privadas no se descargan para offline. Se indica cuando una semana no está guardada. Los temas del perfil requieren conexión, como en la entrega anterior.
+
+Los envíos usan `apply_shopping_mark` con UUID persistente y recibos privados. La pertenencia tiene una generación `membership_id` validada en el servidor; reingresar en una casa no rehabilita pendientes antiguos. Web Locks serializa envíos entre pestañas y BroadcastChannel comunica invalidaciones. Sin Web Locks se conserva la cola y se informa del bloqueo. Cerrar sesión offline retira sesión y datos locales. Una identidad mínima local permite consultar snapshots con Auth caducado, sin autorizar escrituras remotas.
+
 
 - PWA instalable en Android y iPhone, con manifest e iconos adecuados.
 - Sin conexión: consultar los últimos datos disponibles y marcar o desmarcar compras. Crear o editar platos, menú, perfil y hogar requiere conexión.

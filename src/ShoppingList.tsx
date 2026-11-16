@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
+import { useOffline } from './offline';
+import { readShopping } from './offlineResources';
 import IngredientPicker from './IngredientPicker';
 import WeekNavigation from './WeekNavigation';
-import { supabase } from './supabase';
 import type { Ingredient } from './recipes';
-import { loadShoppingWeek, setManualItem, setPurchased, type ShoppingItem } from './shopping';
+import { setManualItem, setPurchased, type ShoppingItem } from './shopping';
 import { useRealtimeRefresh } from './realtime';
 export default function ShoppingList({houseId,week,onWeekChange,online}:{houseId:string;week:string;onWeekChange:(week:string)=>void;online:boolean}) {
+ const workspace=useOffline();
  const [items,setItems]=useState<ShoppingItem[]>([]);
  const [ingredients,setIngredients]=useState<Ingredient[]>([]);
  const [loading,setLoading]=useState(true);
@@ -18,26 +20,34 @@ export default function ShoppingList({houseId,week,onWeekChange,online}:{houseId
  useEffect(()=>{
   const ticket=++generation.current;let active=true;
   const key=houseId+week;if(loaded.current!==key)setLoading(true);
-  void Promise.all([loadShoppingWeek(week),supabase!.from('ingredients').select('id,name,kcal_per_100g').eq('household_id',houseId).order('name')]).then(([list,catalog])=>{
-   if(catalog.error)throw catalog.error;
-   if(active&&ticket===generation.current){setItems(list);setIngredients(catalog.data||[]);setError('');loaded.current=key;}
-  }).catch(()=>{if(active&&ticket===generation.current){setItems([]);setError('No se ha podido cargar la compra.');}}).finally(()=>{if(active&&ticket===generation.current)setLoading(false);});
+  void readShopping(workspace,houseId,week,online).then(data=>{
+   if(active&&ticket===generation.current){setItems(data.list);setIngredients(data.ingredients);setError('');loaded.current=key;}
+  }).catch(()=>{if(active&&ticket===generation.current){setItems([]);setError(online?'No se ha podido cargar la compra.':'No hay compra guardada para esta semana.');}}).finally(()=>{if(active&&ticket===generation.current)setLoading(false);});
   return ()=>{active=false;};
- },[houseId,week,retry]);
+ },[houseId,week,retry,online,workspace]);
  useEffect(()=>{
   const refresh=()=>{if(document.visibilityState==='visible'&&!busy&&!picker)setRetry(n=>n+1);};
   document.addEventListener('visibilitychange',refresh);return()=>document.removeEventListener('visibilitychange',refresh);
  },[busy,picker]);
+ useEffect(()=>{const refresh=()=>{if(!busy&&!picker)setRetry(n=>n+1);};window.addEventListener('home-menu-shopping-synced',refresh);window.addEventListener('home-menu-offline-change',refresh);return()=>{window.removeEventListener('home-menu-shopping-synced',refresh);window.removeEventListener('home-menu-offline-change',refresh);};},[busy,picker]);
+ async function mark(item:ShoppingItem,purchased:boolean){
+  if(busy||loading||Boolean(error))return;
+  if(!workspace){await action(()=>setPurchased(item.id,purchased));return;}
+  generation.current++;setBusy(true);setError('');
+  try{await workspace.mark(week,item.id,purchased);setItems(list=>list.map(row=>row.id===item.id?{...row,purchased}:row));}
+  catch{setError('No se ha guardado la marca en este dispositivo.');}
+  finally{setBusy(false);}
+ }
  async function action(operation:()=>Promise<ShoppingItem[]>) {
   if(busy||loading||!online)return;generation.current++;setBusy(true);setError('');
-  try{setItems(await operation());setPicker(false);}
+  try{const result=await operation();await workspace?.cache('shopping:'+week,{list:result,ingredients});setItems(workspace?await workspace.overlay(week,result):result);setPicker(false);}
   catch{setError('No se ha podido guardar. Actualiza la compra y reintenta.');}
   finally{setBusy(false);}
  }
  const disabled=busy||loading||!online;
  function row(item:ShoppingItem) {
   return <li key={item.id} className={item.purchased?'shopping-row purchased':'shopping-row'}>
-   <label><input type="checkbox" checked={item.purchased} disabled={disabled||Boolean(error)} onChange={e=>void action(()=>setPurchased(item.id,e.target.checked))}/><span>{item.name}</span></label>
+   <label><input type="checkbox" checked={item.purchased} disabled={busy||loading||(!online&&!workspace)||Boolean(error)} onChange={e=>void mark(item,e.target.checked)}/><span>{item.name}</span></label>
    {item.manual&&<button className="secondary compact" disabled={disabled||Boolean(error)} aria-label={`Quitar producto manual ${item.name}`} onClick={()=>void action(()=>setManualItem(week,item.ingredient_id,false))}>Quitar</button>}
   </li>;
  }

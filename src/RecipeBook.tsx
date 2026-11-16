@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import { useOffline } from './offline';
+import { readBook } from './offlineResources';
 import RecipeEditor from './RecipeEditor';
 import { useRealtimeRefresh } from './realtime';
-import { archiveRecipe, categories, filterRecipes, loadRecipeBook, type Ingredient, type Recipe } from './recipes';
+import { archiveRecipe, categories, filterRecipes, type Ingredient, type Recipe } from './recipes';
 export default function RecipeBook({ houseId, online }: {houseId:string; online:boolean}) {
+  const workspace=useOffline();
   const [recipes,setRecipes]=useState<Recipe[]>([]);
   const [ingredients,setIngredients]=useState<Ingredient[]>([]);
   const [loading,setLoading]=useState(true);
@@ -21,13 +24,13 @@ export default function RecipeBook({ houseId, online }: {houseId:string; online:
   useEffect(()=>{
     let active=true;const ticket=++generation.current;
     if(loaded.current!==houseId)setLoading(true);setError('');
-    void loadRecipeBook(houseId).then(data=>{
+    void readBook(workspace,houseId,online).then(data=>{
       if(!active||ticket!==generation.current)return;
       loaded.current=houseId;
       setRecipes(data.recipes);setIngredients(data.ingredients);setPhotoError(data.photoError);
-    }).catch(()=>{if(active&&ticket===generation.current){setRecipes([]);setIngredients([]);setError('No se ha podido cargar la carta.');}}).finally(()=>{if(active&&ticket===generation.current)setLoading(false);});
+    }).catch(()=>{if(active&&ticket===generation.current){setRecipes([]);setIngredients([]);setError(online?'No se ha podido cargar la carta.':'No hay carta guardada en este dispositivo.');}}).finally(()=>{if(active&&ticket===generation.current)setLoading(false);});
     return ()=>{active=false;};
-  },[houseId,retry]);
+  },[houseId,retry,online,workspace]);
   useEffect(()=>{
     const refresh=()=>{if(document.visibilityState==='visible'&&!editing)setRetry(n=>n+1);};
     document.addEventListener('visibilitychange',refresh);

@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-export type House={id:string;name:string;owner_id:string;deletion_requested_at:string|null};
+export type House={id:string;name:string;owner_id:string;deletion_requested_at:string|null;membership_id?:string};
 export type Member={user_id:string;display_name:string;is_owner:boolean};
 function client(){if(!supabase)throw new Error('Supabase no configurado');return supabase;}
 export async function getMembers():Promise<Member[]>{const r=await client().rpc('get_household_members');if(r.error)throw r.error;return r.data;}

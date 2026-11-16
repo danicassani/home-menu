@@ -4,9 +4,11 @@ import type { ShoppingItem } from '../src/shopping';
 import type { Preferences } from '../src/preferences';
 
 export function createFixtureState() {
+ const receipts=new Map<string,{input:string;result:string}>();
+ const markRequests:Record<string,unknown>[]=[];
  const preferences=new Map<string,Preferences>();
  const house={id:'00000000-0000-0000-0000-000000000010',name:'Casa de prueba',owner_id:'00000000-0000-0000-0000-000000000001',deletion_requested_at:null as string|null,deleted:false};
- const members=[{user_id:house.owner_id,display_name:'Alex'},{user_id:'00000000-0000-0000-0000-000000000002',display_name:'Sam'}];
+ const members=[{user_id:house.owner_id,display_name:'Alex',membership_id:crypto.randomUUID()},{user_id:'00000000-0000-0000-0000-000000000002',display_name:'Sam',membership_id:crypto.randomUUID()}];
  const files=new Set<string>();
  const ingredients=[{id:'00000000-0000-0000-0000-000000000021',name:'Pollo',kcal_per_100g:null},{id:'00000000-0000-0000-0000-000000000022',name:'Tofu',kcal_per_100g:80}];
  type Dish={id:string;name:string;description:string;instructions:string;categories:string[];photo_path:string|null;revision:number;archived:boolean};
@@ -25,7 +27,7 @@ export function createFixtureState() {
   for(const id of required)if(!items.some(i=>i.ingredient_id===id))items.push({id:crypto.randomUUID(),ingredient_id:id,name:ingredients.find(i=>i.id===id)!.name,from_menu:true,manual:false,purchased:false});
   items.sort((a,b)=>a.name.localeCompare(b.name,'es'));shopping.set(day,items);return items;
  }
- return {preferences,house,members,files,userNotifiers:new Set<()=>void>(),ingredients,recipes,lines,alternatives,weeks,week,shopping,reconcile,notifiers:new Set<()=>void>(),revision:0};
+ return {networkOffline:false,dropNextMarkResponse:false,receipts,markRequests,preferences,house,members,files,userNotifiers:new Set<()=>void>(),ingredients,recipes,lines,alternatives,weeks,week,shopping,reconcile,notifiers:new Set<()=>void>(),revision:0};
 }
 
 // Auth y HTTP simulados; sin credenciales ni acceso a Supabase remoto.
@@ -58,6 +60,7 @@ export async function setupApp(page:Page,state=createFixtureState(),userId='0000
   ws.onClose(()=>{if(notifyHouse)state.notifiers.delete(notifyHouse);if(notifyUser)state.userNotifiers.delete(notifyUser);});
  });
  await page.route('https://fixture.supabase.co/**' ,async route=>{
+  if(state.networkOffline){await route.abort('internetdisconnected');return;}
   const url=new URL(route.request().url());
   const name=url.pathname.split('/').pop();
   if(url.pathname.startsWith('/storage/v1/object/sign/recipe-photos/') && route.request().method()==='GET') {
@@ -77,7 +80,8 @@ export async function setupApp(page:Page,state=createFixtureState(),userId='0000
   }else if(url.pathname.startsWith('/storage/v1/object/recipe-photos/')) {
    state.files.add(url.pathname.split('/recipe-photos/')[1]);
    body={Key:'recipe-photos/'+url.pathname.split('/recipe-photos/')[1]};
-  }else if(url.pathname==='/auth/v1/user')body=user;
+  }else if(url.pathname==='/auth/v1/token')body=session;
+  else if(url.pathname==='/auth/v1/user')body=user;
   else if(name==='user_preferences'){
    if(route.request().method()==='POST'){
     const data=route.request().postDataJSON();
@@ -88,6 +92,7 @@ export async function setupApp(page:Page,state=createFixtureState(),userId='0000
    }
   }
   else if(name==='households')body=state.members.some(m=>m.user_id===userId)&&!state.house.deleted&&(!state.house.deletion_requested_at||state.house.owner_id===userId)?[state.house]:[];
+  else if(name==='household_members')body=state.members.filter(m=>m.user_id===userId).map(m=>({household_id:houseId,membership_id:m.membership_id}));
   else if(name==='get_household_members')body=state.members.map(m=>({...m,is_owner:m.user_id===state.house.owner_id}));
   else if(name==='remove_household_member'||name==='transfer_household'||name==='leave_household'){
    const data=route.request().postDataJSON()||{};
@@ -107,6 +112,20 @@ export async function setupApp(page:Page,state=createFixtureState(),userId='0000
   else if(name==='recipe_ingredients')body=lines;
   else if(name==='recipe_alternatives')body=alternatives;
   else if(name==='get_shopping_week')body=reconcile(route.request().postDataJSON().p_week);
+  else if(name==='apply_shopping_mark'){
+   const data=route.request().postDataJSON();
+   if(data.p_house!==houseId||!state.members.some(m=>m.user_id===userId&&m.membership_id===data.p_membership)){await route.fulfill({status:403,json:{message:'Pertenencia caducada'}});return;}state.markRequests.push(data);
+   if(!state.members.some(m=>m.user_id===userId)||state.house.deleted||state.house.deletion_requested_at||data.p_house!==houseId){await route.fulfill({status:403,json:{message:'Casa no disponible'}});return;}
+   const key=userId+'/'+data.p_operation,input=JSON.stringify(data);const receipt=state.receipts.get(key);
+   if(receipt&&receipt.input!==input){await route.fulfill({status:400,json:{message:'Operación reutilizada'}});return;}
+   if(receipt)body=receipt.result;
+   else{
+    const item=reconcile(data.p_week).find(i=>i.id===data.p_item);
+    if(item)item.purchased=data.p_purchased;
+    body=item?'applied':'stale';state.receipts.set(key,{input,result:String(body)});
+   }
+   if(state.dropNextMarkResponse){state.dropNextMarkResponse=false;await route.abort('failed');return;}
+  }
   else if(name==='set_shopping_purchased'){
    const data=route.request().postDataJSON();let found=false;
    for(const [day,items] of shopping){const item=items.find(i=>i.id===data.p_item);if(item){item.purchased=data.p_purchased;body=reconcile(day);found=true;break;}}
@@ -163,7 +182,7 @@ export async function setupApp(page:Page,state=createFixtureState(),userId='0000
    const recipe=recipes.find(r=>r.id===data.p_id)!;recipe.archived=data.p_archived;recipe.revision++;
    body=null;
   }
-  const mutation=['create_ingredient','save_recipe','set_recipe_archived','change_menu_week','copy_menu_week','set_shopping_purchased','set_manual_shopping','remove_household_member','transfer_household','leave_household','begin_household_deletion','finish_household_deletion'].includes(name||'');
+  const mutation=['create_ingredient','save_recipe','set_recipe_archived','change_menu_week','copy_menu_week','set_shopping_purchased','apply_shopping_mark','set_manual_shopping','remove_household_member','transfer_household','leave_household','begin_household_deletion','finish_household_deletion'].includes(name||'');
   if(mutation)for(const day of new Set([...state.weeks.keys(),...shopping.keys()]))reconcile(day);
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
   if(mutation){state.revision++;for(const notify of state.notifiers)notify();if(['remove_household_member','transfer_household','leave_household','begin_household_deletion','finish_household_deletion'].includes(name||''))for(const notify of state.userNotifiers)notify();}
@@ -172,4 +191,9 @@ export async function setupApp(page:Page,state=createFixtureState(),userId='0000
  await expect(page.getByRole('heading',{name:'Carta',exact:true})).toBeVisible();
  await expect(page.getByRole('status',{name:'Sincronización activa'})).toBeVisible();
  return state;
+}
+
+export function currentWeek(){
+ const date=new Date();date.setHours(12,0,0,0);date.setDate(date.getDate()-((date.getDay()+6)%7));
+ return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
 }

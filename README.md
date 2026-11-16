@@ -63,7 +63,7 @@ npm run preview
 
 Cloudflare Pages: comando de build `npm run build`, directorio de salida `dist`, Node.js 22 o posterior y las dos variables públicas configuradas antes de compilar. `public/_redirects` permite rutas de SPA. Esta entrega no despliega automáticamente.
 
-**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. También hay gestión de miembros, transferencia, salida y eliminación de casas. También hay perfil personal, avatar emoji y temas claro/oscuro. Pendientes: PWA/offline. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
+**Estado:** acceso Google, creación de casas e invitaciones compartibles, revocables y válidas durante siete días. También hay gestión de miembros, transferencia, salida y eliminación de casas. También hay perfil personal, avatar emoji y temas claro/oscuro. También hay instalación PWA y compra sin conexión; falta validación en dispositivos reales. Interfaz cuidada y contenida, con tarjetas y tonos suaves; único eslogan: «Olvida el 'qué comemos'».
 
 Antes de desplegar esta entrega, aplica `supabase/migrations/202611140001_households.sql` una sola vez en el SQL Editor de Supabase. No contiene datos de ejemplo. Activa RLS y limita las escrituras a funciones transaccionales. No se ha aplicado automáticamente. Las pruebas SQL se ejecutan contra PostgreSQL local embebido (PGlite) con roles Auth simulados, sin conectarse a producción. Las pruebas de interfaz simulan el cliente Supabase.
 
@@ -101,7 +101,7 @@ Las flechas y el selector de fecha cambian de semana. Copiar desde replica plato
 
 **Nueva migración:** ejecutar una sola vez `supabase/migrations/202611150002_weekly_menu.sql`, después de las dos anteriores, antes de desplegar este bloque. No volver a ejecutar las migraciones ya aplicadas. Añade las semanas, apariciones, alternativas y políticas RLS, y amplía `save_recipe` manteniendo su contrato. Su implementación auxiliar queda privada. Los cambios de recetas y menús se serializan por casa y las revisiones impiden sobrescribir cambios recientes; en caso de conflicto, usar Actualizar semana.
 
-La semana se recarga con los avisos Realtime, al volver a la pestaña del navegador o al pulsar Actualizar semana. El trabajo offline sigue pendiente. Las migraciones de esta entrega no se han aplicado ni probado en el proyecto Supabase remoto. Las pruebas locales cubren aislamiento, validación de alternativas, revisiones, archivo, copia, cambios de mes/año y fechas cercanas a cambios de hora; los recorridos de navegador usan HTTP simulado.
+La semana se recarga con los avisos Realtime, al volver a la pestaña del navegador o al pulsar Actualizar semana. La consulta de semanas visitadas está disponible sin conexión (véase PWA y desconexión). Las migraciones de esta entrega no se han aplicado ni probado en el proyecto Supabase remoto. Las pruebas locales cubren aislamiento, validación de alternativas, revisiones, archivo, copia, cambios de mes/año y fechas cercanas a cambios de hora; los recorridos de navegador usan HTTP simulado.
 
 
 ## Compra automática y colaboración
@@ -116,7 +116,7 @@ Las marcas se conservan mientras el ingrediente siga siendo necesario. Si desapa
 
 Realtime avisa de cambios en carta, menú, compra e invitaciones; cada cliente recarga los datos autorizados de su casa. No se envían recetas ni productos en el aviso. Los eventos se agrupan y las recargas se aplazan mientras se edita o guarda, sin sustituir el borrador ni su revisión. Se recupera el estado al suscribirse/reconectar. Si falla el canal, se actualiza cada 15 segundos; cada minuto se revalida el estado incluso con el canal activo. Al salir o cambiar de casa se retira la suscripción.
 
-Las pruebas SQL comprueban derivación, permisos, conservación de marcas, identidades nuevas, copias y publicación. Playwright usa el cliente Supabase real con HTTP y WebSocket simulados, incluyendo dos sesiones en contextos independientes. Esto no sustituye la comprobación del proyecto Supabase desplegado tras aplicar la migración. Sin conexión las escrituras siguen deshabilitadas: el almacenamiento offline se implementará en otra entrega.
+Las pruebas SQL comprueban derivación, permisos, conservación de marcas, identidades nuevas, copias y publicación. Playwright usa el cliente Supabase real con HTTP y WebSocket simulados, incluyendo dos sesiones en contextos independientes. Esto no sustituye la comprobación del proyecto Supabase desplegado tras aplicar la migración. Sin conexión se pueden guardar marcas de compra; las demás escrituras requieren conexión (véase PWA y desconexión).
 
 
 ## Gestión de casa
@@ -141,3 +141,29 @@ Las preferencias se guardan por cuenta en `user_preferences`, con políticas RLS
 **Nueva migración:** aplicar una sola vez `supabase/migrations/202611160003_profile_preferences.sql` después de las cinco anteriores, antes de fusionar/desplegar. No repetir migraciones ya aplicadas. No necesita nuevas variables, secretos ni funciones Edge. Esta migración no se ha ejecutado en el proyecto remoto.
 
 Las pruebas locales verifican aislamiento entre cuentas, permisos anónimos, valores admitidos y borrado en cascada con la cuenta. También cubren contraste del texto en las doce combinaciones, previsualización, cancelación, errores y desconexión. Playwright comprueba persistencia tras recarga, modo del sistema, navegación por teclado, cierre de sesión y cuentas independientes en tamaños móvil y escritorio con Supabase simulado; no sustituye la validación en dispositivos reales.
+
+
+## PWA y desconexión
+
+La aplicación incorpora manifest, iconos normales/maskable y apple-touch-icon. En navegadores compatibles aparece **Instalar app**. En iPhone/iPad, ese botón muestra la ruta de Safari: Compartir → Añadir a pantalla de inicio. Se necesita HTTPS (localhost también permite probar el service worker). La actualización de una versión instalada ofrece **Actualizar app** y conserva las marcas pendientes.
+
+Tras una visita online, el shell permite recargar sin conexión. IndexedDB guarda la carta, el catálogo y las semanas de menú/compra que se hayan consultado. No descarga otras semanas automáticamente. Las fotos y sus URLs firmadas no se guardan para uso offline; los textos e ingredientes siguen disponibles. Las preferencias del perfil siguen requiriendo conexión.
+
+Se pueden marcar y desmarcar productos de una compra guardada. La interfaz muestra las marcas pendientes y los fallos; guardarlas localmente no significa que se hayan sincronizado. Al reconectar, volver a la pestaña o reintentar, se verifica la pertenencia y se envían las marcas. Sin conexión no se pueden crear/editar platos, menú, productos manuales, perfil o casas. Una semana no visitada muestra que no hay datos guardados.
+
+Cada marca conserva su UUID de operación al reintentarse: si se pierde la respuesta después de confirmar el servidor, no vuelve a aplicar una marca antigua sobre otra posterior. Los recibos permanecen hasta borrar la casa o la cuenta. Las marcas de una identidad de producto eliminada se descartan, aunque se reintroduzca el mismo ingrediente. Entre marcas nuevas válidas prevalece la última aceptada por el servidor.
+
+La caché y la cola se separan por cuenta, casa y generación de pertenencia (`membership_id`). Salir de la casa, perder acceso, iniciar su eliminación, cerrar sesión o cambiar de cuenta retira los datos privados; se comprueba también la pertenencia tras arrancar online. Reingresar en la misma casa no recupera pendientes de la pertenencia anterior. BroadcastChannel avisa a otras pestañas y Web Locks serializa los envíos. Sin Web Locks no se envían marcas y se muestra un error.
+
+Cerrar sesión offline elimina la sesión de este dispositivo y sus datos locales. La identidad mínima guardada (identificador y nombre, sin credenciales nuevas) permite consultar la caché offline aunque el token de Auth necesite renovarse. Para enviar cambios se requiere una sesión de Supabase válida y pertenencia actual. Si IndexedDB no está disponible o se agota su espacio, se informa y no se da una marca por guardada.
+
+**Nueva migración:** ejecutar una sola vez `supabase/migrations/202611160004_offline_shopping.sql`, después de las seis anteriores y antes de fusionar/desplegar. Añade la generación de pertenencia y `apply_shopping_mark`, con recibos privados y autorización transaccional. No repetir migraciones ya aplicadas. No necesita nuevas variables, secretos ni Edge Functions. No se ha ejecutado en el proyecto Supabase remoto.
+
+```sh
+npm test
+npm run build
+npm run test:e2e
+npm run test:pwa
+```
+
+`test:pwa` compila con configuración ficticia de pruebas y sirve el build en un puerto aislado. Comprueba service worker, recarga offline con sesión caducada, persistencia de marcas, limpieza al cerrar sesión y ausencia de respuestas privadas en Cache Storage. Genera de nuevo el build con tu configuración habitual si vas a desplegar después. Playwright usa Chromium con viewports móvil/escritorio y Auth/HTTP/WebSocket simulados; no acredita instalación real en Android/iPhone. Las pruebas SQL locales cubren también reintentos, permisos y pertenencias antiguas. Queda validar los servicios remotos y los dispositivos reales.
