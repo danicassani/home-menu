@@ -171,3 +171,19 @@ button.recipe-card:hover { background: #fafcf7; border-color: #8ca084; }
 @media (max-width: 370px) { .house-tabs { gap: 6px; } .house-tabs button { min-width: 0; flex: 1; padding: 10px 8px; } }
 .week-navigation label { min-width: 0; }
 .week-navigation input { min-width: 0; }
+
+/* Compra compartida */
+.sync-status { font-size: 11px; color: #64755e; margin: -12px 0 24px; }
+.shopping-items { list-style: none; padding: 0; margin: 16px 0 24px; }
+.shopping-row { display: flex; align-items: center; gap: 12px; min-height: 60px; border-bottom: 1px solid #e5ebdf; padding: 10px 0; }
+.shopping-row label { display: flex; align-items: center; gap: 14px; flex: 1; min-height: 44px; min-width: 0; margin: 0; cursor: pointer; font-size: 15px; font-weight: 450; }
+.shopping-row input { width: 20px; height: 20px; min-height: 0; flex-shrink: 0; margin: 0; accent-color: #2e5145; }
+.shopping-row span { overflow-wrap: anywhere; }
+.shopping-row button { margin: 0; }
+.shopping-row.purchased span { text-decoration: line-through; color: #687666; }
+.purchased-items summary { cursor: pointer; font-size: 14px; color: #52684e; min-height: 44px; padding: 12px 0; }
+.house-tabs { flex-wrap: wrap; }
+@media(max-width: 600px) { .house-tabs { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; } .house-tabs button { min-width: 0; padding: 10px 6px; font-size: 12px; } }
+.sync-status { display: flex; align-items: center; gap: 7px; color: #6b7468; font-size: 11px; margin: -12px 0 24px; }
+.sync-status::before { content: ''; width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: #b39a58; }
+.sync-status.live::before { background: #56805b; }

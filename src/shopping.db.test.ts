@@ -1,0 +1,114 @@
+// @vitest-environment node
+import { PGlite } from '@electric-sql/pglite';
+import { readFileSync } from 'node:fs';
+import { afterAll, beforeAll, expect, it } from 'vitest';
+import type { MenuWeek } from './menu';
+import type { ShoppingItem } from './shopping';
+let db:PGlite, chicken:string,tofu:string,rice:string,foreign:string,dish:string;
+const uid=(n:number)=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
+const user=async(n:number)=>db.exec(`reset role;set role authenticated;set request.jwt.claim.sub='${uid(n)}';`);
+const ingredient=async(name:string)=>(await db.query<{id:string}>('select * from public.create_ingredient($1)',[name])).rows[0].id;
+const list=async(w:string)=>(await db.query<{data:ShoppingItem[]}>('select public.get_shopping_week($1) as data',[w])).rows[0].data;
+const menu=async(w:string)=>(await db.query<{data:MenuWeek}>('select public.get_menu_week($1) as data',[w])).rows[0].data;
+async function change(w:string,action:string,entry:string|null=null,choices:unknown=[]){
+ const current=await menu(w);
+ return (await db.query<{data:MenuWeek}>(`select public.change_menu_week($1,$2,$3,$4,$1,'lunch',$5,$6::jsonb) as data`,[w,current.revision,action,entry,dish,JSON.stringify(choices)])).rows[0].data;
+}
+const mark=async(id:string,value:boolean)=>(await db.query<{data:ShoppingItem[]}>('select public.set_shopping_purchased($1,$2) as data',[id,value])).rows[0].data;
+const manual=async(w:string,id:string,present:boolean)=>(await db.query<{data:ShoppingItem[]}>('select public.set_manual_shopping($1,$2,$3) as data',[w,id,present])).rows[0].data;
+const signal=async()=>Number((await db.query<{revision:string}>('select revision from public.household_changes')).rows[0].revision);
+beforeAll(async()=>{
+ db=new PGlite();
+ await db.exec(`create role anon;create role authenticated;create schema auth;create schema storage;
+ create table auth.users(id uuid primary key);
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ grant usage on schema public,auth,storage to authenticated,anon;
+ create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+ create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);
+ alter table storage.objects enable row level security;
+ create function storage.foldername(text) returns text[] language sql immutable as $$select string_to_array($1,'/')$$;
+ insert into auth.users values('${uid(1)}'),('${uid(2)}'),('${uid(3)}');`);
+ for(const file of ['202611140001_households.sql','202611150001_recipes.sql','202611150002_weekly_menu.sql'])await db.exec(readFileSync('supabase/migrations/'+file,'utf8'));
+ await user(2);await db.query(`select public.create_household('B')`);foreign=await ingredient('Privado');
+ await user(1);await db.query(`select public.create_household('A')`);
+ chicken=await ingredient('Pollo');tofu=await ingredient('Tofu');rice=await ingredient('Arroz');
+ dish=(await db.query<{id:string}>(`select * from public.save_recipe(null,null,'Plato','','Cocinar',array['lunch'],null,$1::jsonb)`,[JSON.stringify([{ingredient_id:chicken,alternatives:[tofu]},{ingredient_id:rice,alternatives:[]}])])).rows[0].id;
+ await change('2026-11-16','add');
+ await db.exec('reset role;');
+ await db.exec(readFileSync('supabase/migrations/202611160001_shopping_realtime.sql','utf8'));
+ await user(1);
+},30000);
+afterAll(async()=>{await db?.close();});
+it('crea la compra para menús existentes al aplicar la migración',async()=>{
+ const items=await list('2026-11-16');expect(items.map(i=>i.name)).toEqual(['Arroz','Pollo']);
+ expect(items.every(i=>i.from_menu&&!i.manual&&!i.purchased)).toBe(true);
+});
+it('deduplica, respeta alternativas y mantiene marcas solo mientras exista la necesidad',async()=>{
+ const w='2026-11-23';let current=await change(w,'add');
+ const original=(await list(w)).find(i=>i.ingredient_id===chicken)!;
+ await mark(original.id,true);current=await change(w,'add');
+ expect((await list(w)).find(i=>i.id===original.id)?.purchased).toBe(true);
+ current=await change(w,'choices',current.entries[0].id,[{ingredient_id:chicken,alternative_id:tofu}]);
+ expect((await list(w)).map(i=>i.name)).toEqual(['Arroz','Pollo','Tofu']);
+ await change(w,'remove',current.entries[1].id);
+ expect((await list(w)).some(i=>i.ingredient_id===chicken)).toBe(false);
+ await expect(mark(original.id,false)).rejects.toThrow('ya no');
+ await change(w,'choices',current.entries[0].id,[]);
+ const recreated=(await list(w)).find(i=>i.ingredient_id===chicken)!;
+ expect(recreated.id).not.toBe(original.id);expect(recreated.purchased).toBe(false);
+ const before=await signal();
+ await expect(change(w,'choices',current.entries[0].id,[{ingredient_id:chicken,alternative_id:foreign}])).rejects.toThrow();
+ expect(await signal()).toBe(before);
+ expect((await list(w)).find(i=>i.ingredient_id===chicken)?.id).toBe(recreated.id);
+});
+it('combina aportaciones manuales y menú sin duplicar ni permitir borrar necesidades del menú',async()=>{
+ const w='2026-11-30';let current=await change(w,'add');
+ const original=(await list(w)).find(i=>i.ingredient_id===chicken)!;
+ await mark(original.id,true);let items=await manual(w,chicken,true);
+ expect(items.filter(i=>i.ingredient_id===chicken)).toHaveLength(1);
+ expect(items.find(i=>i.id===original.id)).toMatchObject({purchased:true,manual:true,from_menu:true});
+ items=await manual(w,chicken,false);
+ expect(items.find(i=>i.id===original.id)).toMatchObject({purchased:true,manual:false,from_menu:true});
+ await manual(w,chicken,true);current=await change(w,'remove',current.entries[0].id);
+ expect(current.entries).toHaveLength(0);
+ expect(await list(w)).toEqual([expect.objectContaining({id:original.id,from_menu:false,manual:true,purchased:true})]);
+ expect(await manual(w,chicken,false)).toEqual([]);
+});
+it('no copia productos manuales ni marcas compradas al copiar menús',async()=>{
+ const source='2026-12-07',target='2026-12-14';await change(source,'add');
+ const extra=await ingredient('Jabón');await manual(source,extra,true);
+ const bought=(await list(source)).find(i=>i.ingredient_id===rice)!;await mark(bought.id,true);
+ await db.query('select public.copy_menu_week($1,$2,0,false)',[source,target]);
+ expect((await list(target)).map(i=>i.name)).toEqual(['Arroz','Pollo']);
+ expect((await list(target)).every(i=>!i.purchased&&!i.manual)).toBe(true);
+});
+it('recalcula las semanas afectadas al editar recetas sin perder marcas de ingredientes conservados',async()=>{
+ const w='2026-12-21';await change(w,'add');const current=await menu(w);
+ await change(w,'choices',current.entries[0].id,[{ingredient_id:chicken,alternative_id:tofu}]);
+ const bought=(await list(w)).find(i=>i.ingredient_id===rice)!;await mark(bought.id,true);
+ await db.query(`select * from public.save_recipe($1,1,'Plato','','Cocinar',array['lunch'],null,$2::jsonb)`,[dish,JSON.stringify([{ingredient_id:chicken,alternatives:[]},{ingredient_id:rice,alternatives:[]}])]);
+ expect((await list(w)).map(i=>i.name)).toEqual(['Arroz','Pollo']);
+ expect((await list(w)).find(i=>i.id===bought.id)?.purchased).toBe(true);
+ expect((await menu(w)).entries[0].choices_reset).toBe(true);
+});
+it('aísla datos y señales, y permite comprar a otro miembro de la misma casa',async()=>{
+ const w='2026-11-16';const item=(await list(w))[0];
+ const before=await signal();await mark(item.id,true);expect(await signal()).toBeGreaterThan(before);
+ const token=(await db.query<{token:string}>('select public.create_household_invitation() as token')).rows[0].token;
+ await user(2);expect(await list(w)).toEqual([]);
+ expect((await db.query('select * from public.shopping_items')).rows).toHaveLength(0);
+ expect((await db.query<{household_id:string;revision:number}>('select * from public.household_changes')).rows).toHaveLength(1);
+ await expect(mark(item.id,false)).rejects.toThrow();await expect(manual(w,rice,true)).rejects.toThrow();
+ await expect(db.query('update public.household_changes set revision=100')).rejects.toThrow();
+ await expect(db.query('select public.reconcile_shopping_week(public.my_household(),$1)',[w])).rejects.toThrow();
+ await user(3);await expect(list(w)).rejects.toThrow('Casa requerida');
+ await db.query('select public.accept_household_invitation($1)',[token]);
+ expect((await list(w)).find(i=>i.id===item.id)?.purchased).toBe(true);
+ await mark(item.id,false);await user(1);
+ expect((await list(w)).find(i=>i.id===item.id)?.purchased).toBe(false);
+ const rows=await db.query<{household_id:string;revision:number}>('select * from public.household_changes');expect(Object.keys(rows.rows[0]).sort()).toEqual(['household_id','revision']);
+ await db.exec('reset role;');
+ const publication=await db.query<{tablename:string}>(`select tablename from pg_publication_tables where pubname='supabase_realtime'`);
+ expect(publication.rows).toEqual([{tablename:'household_changes'}]);
+ await db.exec('set role anon;');await expect(list(w)).rejects.toThrow();
+});

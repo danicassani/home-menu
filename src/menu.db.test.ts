@@ -29,7 +29,7 @@ beforeAll(async()=>{
  alter table storage.objects enable row level security;
  create function storage.foldername(text) returns text[] language sql immutable as $$select string_to_array($1,'/')$$;
  insert into auth.users values('${uid(1)}'),('${uid(2)}'),('${uid(3)}');`);
- for(const file of ['202611140001_households.sql','202611150001_recipes.sql','202611150002_weekly_menu.sql'])await db.exec(readFileSync('supabase/migrations/'+file,'utf8'));
+ for(const file of ['202611140001_households.sql','202611150001_recipes.sql','202611150002_weekly_menu.sql','202611160001_shopping_realtime.sql'])await db.exec(readFileSync('supabase/migrations/'+file,'utf8'));
  await user(2);await db.query(`select public.create_household('B')`);foreign=await ingredient('Privado');
  await user(1);await db.query(`select public.create_household('A')`);chicken=await ingredient('Pollo');tofu=await ingredient('Tofu');
  dish=(await save()).id;otherDish=(await save()).id;
