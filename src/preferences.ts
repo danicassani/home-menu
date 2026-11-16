@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 export const themes={
- white:{label:'Blanco',swatch:'#e6ebe4',primary:'#2e5145',hover:'#244336',soft:'#edf2e7',dark:'#b1d4bc',darkHover:'#c6e2cf',darkSoft:'#2a3a30'},
+ white:{label:'Blanco',swatch:'#ffffff',primary:'#2e5145',hover:'#244336',soft:'#edf2e7',dark:'#b1d4bc',darkHover:'#c6e2cf',darkSoft:'#2a3a30'},
  blue:{label:'Azul',swatch:'#769fda',primary:'#2457a6',hover:'#1b4689',soft:'#edf3ff',dark:'#a8c7ff',darkHover:'#c3d8ff',darkSoft:'#26364d'},
  red:{label:'Rojo',swatch:'#d78379',primary:'#963b34',hover:'#7d302b',soft:'#fceeea',dark:'#ffb5ac',darkHover:'#ffcdc6',darkSoft:'#452e2c'},
  pink:{label:'Rosa',swatch:'#d991b6',primary:'#913e6c',hover:'#773158',soft:'#fceef5',dark:'#f5b6d7',darkHover:'#ffd0e8',darkSoft:'#412e3a'},

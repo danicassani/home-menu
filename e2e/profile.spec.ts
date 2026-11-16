@@ -6,7 +6,7 @@ test('guarda avatar y apariencia y los recupera tras recargar',async({page},test
  const dialog=page.getByRole('dialog',{name:'Perfil',exact:true});
  await dialog.getByRole('radio',{name:'Limón',exact:true}).check();
  await dialog.getByRole('radio',{name:'Azul',exact:true}).check();
- await dialog.getByRole('combobox',{name:'Modo',exact:true}).selectOption('dark');
+ await dialog.getByRole('switch',{name:'Modo oscuro'}).check();
  await expect(page.locator('html')).toHaveAttribute('data-theme','blue');
  await expect(dialog).toHaveCSS('background-color','rgb(29, 39, 32)');
  await expect(dialog.getByRole('button',{name:'Guardar perfil',exact:true})).toHaveCSS('background-color','rgb(168, 199, 255)');
@@ -25,7 +25,7 @@ test('previsualiza doce combinaciones y Escape cancela y devuelve el foco',async
  const dialog=page.getByRole('dialog',{name:'Perfil'});
  for(const mode of ['light','dark']){
   const backgrounds=new Set<string>();
-  await dialog.getByRole('combobox',{name:'Modo'}).selectOption(mode);
+  await dialog.getByRole('switch',{name:'Modo oscuro'}).setChecked(mode==='dark');
   for(const [value,label] of [['white','Blanco'],['blue','Azul'],['red','Rojo'],['pink','Rosa'],['green','Verde'],['yellow','Amarillo']]){
    await dialog.getByRole('radio',{name:label,exact:true}).check();
    await expect(page.locator('html')).toHaveAttribute('data-theme',value);await expect(page.locator('html')).toHaveAttribute('data-mode',mode);
@@ -40,7 +40,7 @@ test('previsualiza doce combinaciones y Escape cancela y devuelve el foco',async
 test('respeta el sistema, permite fijar el modo y limpia preferencias al cerrar sesión',async({page})=>{
  await setupApp(page);await page.emulateMedia({colorScheme:'dark'});await expect(page.locator('html')).toHaveAttribute('data-mode','dark');
  await page.getByRole('button',{name:'Abrir perfil de Alex'}).click();
- const dialog=page.getByRole('dialog',{name:'Perfil'});await dialog.getByRole('combobox',{name:'Modo'}).selectOption('light');
+ const dialog=page.getByRole('dialog',{name:'Perfil'});await dialog.getByRole('switch',{name:'Modo oscuro'}).uncheck();
  await dialog.getByRole('button',{name:'Guardar perfil'}).click();await expect(page.locator('html')).toHaveAttribute('data-mode','light');
  await page.emulateMedia({colorScheme:'light'});await page.emulateMedia({colorScheme:'dark'});await expect(page.locator('html')).toHaveAttribute('data-mode','light');
  await page.getByRole('button',{name:'Cerrar sesión',exact:true}).click();

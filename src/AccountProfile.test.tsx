@@ -15,7 +15,7 @@ async function open(){await waitFor(()=>expect(screen.getByRole('button',{name:'
 it('previsualiza cambios y Cancelar restaura la apariencia guardada',async()=>{
  render(<AccountProfile user={user} online/>);await open();
  fireEvent.click(screen.getByRole('radio',{name:'Azul'}));
- fireEvent.change(screen.getByRole('combobox',{name:'Modo'}),{target:{value:'dark'}});
+ fireEvent.click(screen.getByRole('switch',{name:'Modo oscuro'}));
  expect(document.documentElement.dataset.theme).toBe('blue');expect(document.documentElement.dataset.mode).toBe('dark');
  fireEvent.click(screen.getByRole('button',{name:'Cancelar'}));
  expect(document.documentElement.dataset.theme).toBe('white');expect(document.documentElement.dataset.mode).toBe('light');expect(api.savePreferences).not.toHaveBeenCalled();
@@ -23,7 +23,7 @@ it('previsualiza cambios y Cancelar restaura la apariencia guardada',async()=>{
 it('guarda las preferencias de la cuenta y actualiza el avatar',async()=>{
  render(<AccountProfile user={user} online/>);await open();
  fireEvent.click(screen.getByRole('radio',{name:'Limón'}));fireEvent.click(screen.getByRole('radio',{name:'Azul'}));
- fireEvent.change(screen.getByRole('combobox',{name:'Modo'}),{target:{value:'dark'}});
+ fireEvent.click(screen.getByRole('switch',{name:'Modo oscuro'}));
  fireEvent.click(screen.getByRole('button',{name:'Guardar perfil'}));
  await waitFor(()=>expect(api.savePreferences).toHaveBeenCalledWith('user',{theme:'blue',mode:'dark',avatar:'🍋'}));
  await waitFor(()=>expect(screen.getByRole('button',{name:'Abrir perfil de Alex'})).toHaveTextContent('🍋'));

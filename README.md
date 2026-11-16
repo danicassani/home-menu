@@ -134,7 +134,7 @@ Las pruebas locales validan permisos, transferencias, salida, revocación de enl
 
 ### Perfil y apariencia
 
-El nombre y avatar de la cabecera abren el perfil. Permite elegir la inicial o uno de 16 emojis, seis temas (blanco, azul, rojo, rosa, verde y amarillo) y modo Sistema, Claro u Oscuro. Por defecto usa blanco y el modo del dispositivo. La selección se previsualiza; Cancelar o Escape restaura lo guardado. Un error al guardar conserva el borrador para reintentar.
+El nombre y avatar de la cabecera abren el perfil. Permite elegir la inicial o uno de 16 emojis, seis temas (blanco, azul, rojo, rosa, verde y amarillo) mediante botones circulares de color sin texto y un interruptor «Modo oscuro» junto a un sol. Activado usa modo oscuro; desactivado usa claro. Por defecto usa blanco y el modo del dispositivo. La selección se previsualiza; Cancelar o Escape restaura lo guardado. Un error al guardar conserva el borrador para reintentar.
 
 Las preferencias se guardan por cuenta en `user_preferences`, con políticas RLS de lectura y escritura exclusivas del usuario. Son independientes de la casa. Se recuperan al iniciar sesión y al volver a la pestaña; el aspecto personal se retira al cerrar sesión. Cambiar el perfil requiere conexión; no existe caché local de preferencias.
 

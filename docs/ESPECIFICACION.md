@@ -61,7 +61,7 @@ Interfaz estética, sencilla, accesible y pensada para móviles: tarjetas, color
 
 - Nombre y avatar en la esquina superior derecha; pulsar abre el perfil.
 - Nombre inicial obtenido de Google y opción para elegir un emoji como avatar personal.
-- Modo claro u oscuro y tema blanco, azul, rojo, rosa, verde o amarillo, cada uno con ambas variantes.
+- Temas blanco, azul, rojo, rosa, verde o amarillo mediante botones de color sin nombres visibles, con etiquetas accesibles y marca de selección. Interruptor «Modo oscuro» acompañado de un sol: activado oscuro, desactivado claro.
 - Persistir preferencias por usuario, aplicarlas entre sesiones y mantener contraste legible en todas las combinaciones. Predeterminado: tema blanco y modo del sistema hasta que el usuario elija claro u oscuro.
 - Implementado con `user_preferences` y RLS privada por cuenta. Ofrece inicial o 16 emojis; previsualizar no guarda hasta confirmar. Cancelar/Escape restaura el aspecto guardado, un error conserva el borrador. Requiere conexión y recarga preferencias al volver a la pestaña.
 - Retirar preferencias visuales al cerrar sesión; no almacenar preferencias privadas en caché local.
