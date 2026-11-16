@@ -18,6 +18,8 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 
 - Interfaz estética y contenida: tipografía cuidada, tarjetas, color y espaciado; sin textos promocionales ni relleno. Único eslogan permitido: «Olvida el 'qué comemos'». Usa etiquetas y mensajes breves.
 
+- Navegación entre Carta, Semana, Compra y Casa en una barra inferior fija de cuatro iconos sin texto visible. Mantén etiquetas accesibles, foco, selección y espacio para que la barra no tape controles ni áreas seguras del móvil.
+
 ## Implementación
 
 - React, TypeScript estricto, Vite y Tailwind; Cloudflare Pages y Supabase. Prefiere herramientas y scripts ya presentes; utiliza el lockfile y no mezcles gestores.

@@ -128,8 +128,6 @@ button.secondary:hover:not(:disabled) { background: var(--soft); }
 
 /* Carta y edición */
 .workspace .surface { max-width: 920px; }
-.house-tabs { display: flex; gap: 8px; margin: 0 0 28px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
-.house-tabs button { min-width: 88px; margin: 0; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
 .section-heading h2, .section-heading h3, .section-heading button { margin: 0; }
 .section-heading h3, .recipe-detail h3 { font-size: 16px; font-weight: 650; }
@@ -221,7 +219,6 @@ button.recipe-card:hover { background: var(--soft); border-color: var(--border);
 .menu-notice { margin-top: 10px; }
 .menu-notice p { margin-bottom: 8px; }
 @media (max-width: 700px) { .week-grid { grid-template-columns: minmax(0,1fr); } }
-@media (max-width: 370px) { .house-tabs { gap: 6px; } .house-tabs button { min-width: 0; flex: 1; padding: 10px 8px; } }
 .week-navigation label { min-width: 0; }
 .week-navigation input { min-width: 0; }
 
@@ -235,8 +232,6 @@ button.recipe-card:hover { background: var(--soft); border-color: var(--border);
 .shopping-row button { margin: 0; }
 .shopping-row.purchased span { text-decoration: line-through; color: var(--muted); }
 .purchased-items summary { cursor: pointer; font-size: 14px; color: var(--muted); min-height: 44px; padding: 12px 0; }
-.house-tabs { flex-wrap: wrap; }
-@media(max-width: 600px) { .house-tabs { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; } .house-tabs button { min-width: 0; padding: 10px 6px; font-size: 12px; } }
 .sync-status { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; margin: -12px 0 24px; }
 .sync-status::before { content: ''; width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: var(--warning); }
 .sync-status.live::before { background: var(--success); }
@@ -292,3 +287,16 @@ button.danger { color: var(--onDanger); }
 .pwa-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding-bottom: 24px; }
 .pwa-actions:empty { display: none; }
 .pwa-actions button, .pwa-actions p { width: auto; margin: 0; }
+
+/* Navegación principal */
+html:has(.bottom-nav) { scroll-padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)); }
+.app-shell:has(.bottom-nav) { padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)); }
+.bottom-nav { position: fixed; z-index: 20; bottom: max(16px, env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: min(520px, calc(100% - 32px)); padding: 10px 16px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: 0 8px 36px var(--shadow); }
+.bottom-nav button { position: relative; display: grid; place-items: center; width: 100%; min-height: 48px; margin: 0; padding: 10px; border: 0; border-radius: 14px; color: var(--muted); background: transparent; }
+.bottom-nav button:hover { background: var(--soft); color: var(--accent); }
+.bottom-nav button[aria-pressed="true"] { color: var(--accent); background: var(--soft); }
+.bottom-nav button[aria-pressed="true"]::after { content: ''; position: absolute; bottom: 4px; left: calc(50% - 2px); width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.bottom-nav svg { width: 26px; height: 26px; }
+@media (max-width: 600px) {
+ .bottom-nav { bottom: 0; left: 0; transform: none; width: 100%; padding: 10px max(20px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px)); border-right: 0; border-bottom: 0; border-left: 0; border-radius: 20px 20px 0 0; box-shadow: 0 -4px 24px var(--shadow); }
+}
