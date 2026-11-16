@@ -4,7 +4,7 @@
 
 Lee README.md y docs/ESPECIFICACION.md antes de modificar comportamiento. El README obtenido de main incorpora requisitos posteriores al plan inicial: desayuno, alternativas, compra por nombres y perfil/temas. La especificación integra esos cambios; no recuperes reglas antiguas de cantidades o de solo comida/cena.
 
-Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, alternativas, fotos y archivo. Existe menú semanal con alternativas por aparición y copia entre semanas. Existe compra automática por semana con productos manuales, Comprados y sincronización Realtime por casa. Hay gestión de miembros, transferencia, salida y eliminación reanudable de casas. Perfil y funcionamiento offline siguen pendientes. Comprueba los scripts de package.json y mantén la documentación sincronizada con cada entrega.
+Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, alternativas, fotos y archivo. Existe menú semanal con alternativas por aparición y copia entre semanas. Existe compra automática por semana con productos manuales, Comprados y sincronización Realtime por casa. Hay gestión de miembros, transferencia, salida y eliminación reanudable de casas. Existe perfil personal con avatar emoji, seis temas y modo claro/oscuro/sistema persistidos bajo RLS. PWA y funcionamiento offline siguen pendientes. Comprueba los scripts de package.json y mantén la documentación sincronizada con cada entrega.
 
 ## Forma de trabajar
 

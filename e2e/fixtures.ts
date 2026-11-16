@@ -1,8 +1,10 @@
 import { expect, type Page } from '@playwright/test';
 import type { MenuWeek } from '../src/menu';
 import type { ShoppingItem } from '../src/shopping';
+import type { Preferences } from '../src/preferences';
 
 export function createFixtureState() {
+ const preferences=new Map<string,Preferences>();
  const house={id:'00000000-0000-0000-0000-000000000010',name:'Casa de prueba',owner_id:'00000000-0000-0000-0000-000000000001',deletion_requested_at:null as string|null,deleted:false};
  const members=[{user_id:house.owner_id,display_name:'Alex'},{user_id:'00000000-0000-0000-0000-000000000002',display_name:'Sam'}];
  const files=new Set<string>();
@@ -23,7 +25,7 @@ export function createFixtureState() {
   for(const id of required)if(!items.some(i=>i.ingredient_id===id))items.push({id:crypto.randomUUID(),ingredient_id:id,name:ingredients.find(i=>i.id===id)!.name,from_menu:true,manual:false,purchased:false});
   items.sort((a,b)=>a.name.localeCompare(b.name,'es'));shopping.set(day,items);return items;
  }
- return {house,members,files,userNotifiers:new Set<()=>void>(),ingredients,recipes,lines,alternatives,weeks,week,shopping,reconcile,notifiers:new Set<()=>void>(),revision:0};
+ return {preferences,house,members,files,userNotifiers:new Set<()=>void>(),ingredients,recipes,lines,alternatives,weeks,week,shopping,reconcile,notifiers:new Set<()=>void>(),revision:0};
 }
 
 // Auth y HTTP simulados; sin credenciales ni acceso a Supabase remoto.
@@ -76,6 +78,15 @@ export async function setupApp(page:Page,state=createFixtureState(),userId='0000
    state.files.add(url.pathname.split('/recipe-photos/')[1]);
    body={Key:'recipe-photos/'+url.pathname.split('/recipe-photos/')[1]};
   }else if(url.pathname==='/auth/v1/user')body=user;
+  else if(name==='user_preferences'){
+   if(route.request().method()==='POST'){
+    const data=route.request().postDataJSON();
+    if(data.user_id!==userId){await route.fulfill({status:403,json:{message:'Forbidden'}});return;}
+    const value={theme:data.theme,mode:data.mode,avatar:data.avatar};state.preferences.set(userId,value);body=value;
+   }else{
+    const value=state.preferences.get(userId);body=value?[value]:[];
+   }
+  }
   else if(name==='households')body=state.members.some(m=>m.user_id===userId)&&!state.house.deleted&&(!state.house.deletion_requested_at||state.house.owner_id===userId)?[state.house]:[];
   else if(name==='get_household_members')body=state.members.map(m=>({...m,is_owner:m.user_id===state.house.owner_id}));
   else if(name==='remove_household_member'||name==='transfer_household'||name==='leave_household'){
