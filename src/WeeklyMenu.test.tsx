@@ -10,6 +10,7 @@ const current=monday(calendarDay(new Date()));
 const recipe={id:'dish',name:'Pollo',description:'',instructions:'Cocinar',tags:['Al horno'],archived:false,photo_path:null,revision:1,lines:[{id:'line',ingredient_id:'chicken',alternatives:['tofu']}]};
 const entry={id:'entry',planned_day:current,meal:'lunch',recipe_id:'dish',choices_reset:false,choices:[]};
 beforeEach(()=>{
+ HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};
  api.loadMenuWeek.mockResolvedValue({revision:2,entries:[entry]});
  api.loadRecipeBook.mockResolvedValue({recipes:[recipe],ingredients:[{id:'chicken',name:'Pollo'},{id:'tofu',name:'Tofu'}],photoError:false});
  api.changeMenuWeek.mockResolvedValue({revision:3,entries:[entry]});
@@ -18,7 +19,9 @@ beforeEach(()=>{
 it('elige una alternativa solo para esa aparición y conserva revisión',async()=>{
  render(<WeeklyMenu houseId="house" online/>);
  const article=await screen.findByRole('article',{name:'Pollo'});
- fireEvent.change(within(article).getByLabelText('Pollo'),{target:{value:'tofu'}});
+ expect(within(article).queryByText('Ingredientes')).not.toBeInTheDocument();
+ fireEvent.click(within(article).getByRole('button',{name:'Abrir Pollo'}));
+ fireEvent.change(within(screen.getByRole('dialog',{name:'Pollo'})).getByLabelText('Pollo'),{target:{value:'tofu'}});
  await waitFor(()=>expect(api.changeMenuWeek).toHaveBeenCalledWith(current,2,{action:'choices',entry:'entry',choices:[{ingredient_id:'chicken',alternative_id:'tofu'}]}));
 });
 it('abre la carta para sustituir conservando el identificador de aparición',async()=>{
@@ -49,4 +52,14 @@ it('desactiva cambios sin conexión',async()=>{
  render(<OfflineContext.Provider value={workspace}><WeeklyMenu houseId="house" online={false}/></OfflineContext.Provider>);
  expect(await screen.findByRole('button',{name:'Quitar'})).toBeDisabled();
  expect(screen.getByRole('button',{name:'Copiar semana'})).toBeDisabled();
+});
+it('muestra dentro del diálogo los errores al cambiar alternativas sin retirar el plato',async()=>{
+ api.changeMenuWeek.mockRejectedValueOnce(new Error('stale'));
+ render(<WeeklyMenu houseId="house" online/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Abrir Pollo'}));
+ const dialog=screen.getByRole('dialog',{name:'Pollo'});
+ fireEvent.change(within(dialog).getByRole('combobox',{name:'Pollo'}),{target:{value:'tofu'}});
+ expect(await within(dialog).findByRole('alert')).toHaveTextContent('No se ha podido guardar');
+ expect(screen.getByRole('article',{name:'Pollo'})).toBeInTheDocument();
+ expect(within(dialog).getByRole('combobox',{name:'Pollo'})).toHaveValue('chicken');
 });

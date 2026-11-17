@@ -1,9 +1,9 @@
 # home-menu
 PWA instalable en Android y iPhone para crear una carta de platos caseros, planificar las comidas de la semana y generar una lista de la compra compartida por los miembros de cada casa. La aplicación se alojará en Cloudflare y usará Supabase para la base de datos, el almacenamiento de fotos y la autenticación.
 
-## Carta
+## Carta de platos
 
-Carta ofrece dos iconos del color del tema para elegir lista (un plato por fila) o cuadrícula (dos por fila, también en móvil). La selección se conserva en este navegador, sin datos personales. La cabecera y el espacio superior del contenido son compactos. de platos
+Carta ofrece dos iconos del color del tema para elegir lista (un plato por fila) o cuadrícula (dos por fila, también en móvil). La selección se conserva en este navegador, sin datos personales. La cabecera y el espacio superior del contenido son compactos.
 
 Los usuarios podrán crear platos a mano y organizarlos con **etiquetas libres y opcionales**. La carta mostrará los platos como tarjetas con nombre, foto y una descripción breve. Al pulsar una tarjeta, se abrirá la ficha del plato con la **foto, la descripción, los ingredientes y la receta**, en ese orden.
 
@@ -107,9 +107,11 @@ Playwright inicia un servidor aislado con respuestas HTTP simuladas, sin credenc
 
 ## Menú semanal
 
+El día actual se resalta con el color del tema y `aria-current="date"`, según la fecha local; se actualiza al cambiar de día y no se marca en otras semanas. Semana muestra tarjetas con foto panorámica de menor altura y título sobre una transparencia negra al pie. Sustituir (flechas circulares) y Quitar (papelera) son iconos en la esquina superior derecha. Los ingredientes no aparecen en la tarjeta: pulsar la foto o el título abre un diálogo con las alternativas de esa aparición; mantiene los bloqueos offline y los avisos si la receta cambia.
+
 La pestaña Semana organiza de lunes a domingo las comidas y cenas. Cada turno admite varios platos, incluso repetidos. Añadir y Sustituir abren la carta con búsqueda y filtro por etiquetas. Cualquier receta puede usarse en comida o cena. Quitar afecta solo a esa aparición.
 
-En Ingredientes se eligen las alternativas de cada plato planificado sin cambiar la receta ni otras apariciones. Si una edición elimina una alternativa elegida, se vuelve al ingrediente original y se muestra un aviso para revisar la receta. Las recetas archivadas siguen visibles en menús existentes, pero no se ofrecen para añadir o sustituir.
+Al abrir la foto o el título del plato planificado se eligen sus alternativas de ingredientes sin cambiar la receta ni otras apariciones. Si una edición elimina una alternativa elegida, se vuelve al ingrediente original y se muestra un aviso para revisar la receta. Las recetas archivadas siguen visibles en menús existentes, pero no se ofrecen para añadir o sustituir.
 
 Las flechas y el selector de fecha cambian de semana. Copiar desde replica platos y alternativas en la semana visible; requiere confirmación si ya contiene platos. Las copias son independientes y no incluyen datos de compra. Las fechas son días de calendario, sin conversión a UTC.
 

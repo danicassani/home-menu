@@ -188,16 +188,26 @@ button.recipe-card:hover { background: var(--soft); border-color: var(--border);
 .copy-week button { margin: 0 0 2px; }
 .week-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
 .menu-day { border: 1px solid var(--line); border-radius: 16px; padding: 18px; min-width: 0; }
+.menu-day[aria-current=date] { border-color: var(--accent); background: var(--soft); }
+.menu-day[aria-current=date] > h3 { color: var(--accent); }
 .menu-day > h3 { text-transform: capitalize; font-weight: 650; margin: 0 0 16px; font-size: 16px; }
 .meal-slot { padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--line); }
 .meal-slot > .section-heading { margin-bottom: 8px; }
 .meal-slot h4 { color: var(--muted); font-size: 13px; font-weight: 550; }
 .meal-slot > .section-heading button { width: 32px; min-height: 30px; padding: 2px; }
-.planned-recipe { padding: 14px; margin-top: 10px; background: var(--soft); border: 1px solid var(--line); border-radius: 12px; }
-.planned-recipe h5 { font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
-.planned-recipe summary { margin: 10px 0; color: var(--muted); cursor: pointer; font-size: 12px; }
-.planned-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-.planned-actions button { margin: 0; font-size: 11px; padding: 5px 9px; min-height: 34px; }
+.planned-recipe { position: relative; overflow: hidden; margin-top: 10px; background: var(--soft); border: 1px solid var(--line); border-radius: 12px; }
+button.planned-cover { position: relative; display: block; width: 100%; aspect-ratio: 16 / 7; min-height: 132px; margin: 0; padding: 0; overflow: hidden; border: 0; border-radius: 0; background: var(--soft); text-align: left; }
+.planned-cover > img, .planned-cover > .recipe-photo-empty { display: block; width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; }
+.planned-cover > .recipe-photo-empty { display: grid; }
+.planned-cover:focus-visible { outline-offset: -4px; }
+.planned-title { position: absolute; inset: auto 0 0; padding: 8px 12px; background: rgb(0 0 0 / .72); color: white; }
+.planned-title h5 { font-size: 14px; line-height: 1.35; font-weight: 650; margin: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.planned-title > span { display: block; font-size: 11px; margin-top: 3px; }
+.planned-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; }
+.planned-actions button { display: grid; place-items: center; width: 44px; min-height: 44px; margin: 0; padding: 10px; color: var(--accent); background: var(--surface); border: 1px solid var(--line); }
+.planned-actions button:hover:not(:disabled) { background: var(--soft); }
+.planned-actions svg { width: 22px; height: 22px; }
+.planned-recipe .menu-notice { padding: 10px 12px; margin: 0; }
 .menu-ingredients { padding: 0; list-style: none; font-size: 13px; }
 .menu-ingredients li { padding: 6px 0; }
 .menu-ingredients label { margin: 0; }
@@ -347,8 +357,8 @@ button.tag-filter[aria-pressed=true] { box-shadow: inset 0 -2px var(--accent); }
 button.clear-filters, button.archive-link { background: transparent; color: var(--accent); padding: 8px 4px; margin: 4px 0 0; min-height: 44px; font-size: 13px; }
 button.clear-filters:hover, button.archive-link:hover { background: var(--soft); }
 .catalog-footer { margin-top: 24px; text-align: center; }
-.archive-dialog { width: min(640px, calc(100% - 32px)); max-height: calc(100svh - 48px); margin: auto; padding: 24px; overflow: auto; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 22px; }
-.archive-dialog::backdrop { background: rgb(0 0 0 / .5); }
+.archive-dialog, .planned-recipe-dialog { width: min(640px, calc(100% - 32px)); max-height: calc(100svh - 48px); margin: auto; padding: 24px; overflow: auto; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 22px; }
+.archive-dialog::backdrop, .planned-recipe-dialog::backdrop { background: rgb(0 0 0 / .5); }
 button.dialog-close { display: grid; place-items: center; width: 44px; height: 44px; padding: 10px; }
 .dialog-close svg { width: 20px; height: 20px; }
 .archive-list { list-style: none; padding: 0; margin: 0; }
