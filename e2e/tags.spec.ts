@@ -12,7 +12,7 @@ test('añade etiquetas libres, las busca, las edita y usa cualquier receta en co
  await page.getByRole('button',{name:'Añadir ingrediente',exact:true}).click();await page.getByRole('button',{name:'Tofu',exact:true}).click();
  await page.getByRole('button',{name:'Guardar plato',exact:true}).click();await expect(page.getByRole('button',{name:/Garbanzos de casa/})).toBeVisible();
  await page.reload();await page.getByRole('searchbox',{name:'Buscar plato',exact:true}).fill('garbanzos rapido');
- await page.getByRole('combobox',{name:'Etiqueta',exact:true}).selectOption('Vegetariano');await expect(page.getByRole('button',{name:/Garbanzos de casa/})).toBeVisible();await expect(page.getByRole('button',{name:/Pollo al horno/})).toHaveCount(0);
+ await page.getByRole('group',{name:'Filtrar por etiquetas'}).getByRole('button',{name:'Vegetariano',exact:true}).click();await expect(page.getByRole('button',{name:/Garbanzos de casa/})).toBeVisible();await expect(page.getByRole('button',{name:/Pollo al horno/})).toHaveCount(0);
  await page.screenshot({path:testInfo.outputPath('etiquetas-carta.png'),fullPage:true});
  await page.getByRole('button',{name:/Garbanzos de casa/}).click();await page.getByRole('button',{name:'Editar plato',exact:true}).click();
  await page.getByRole('button',{name:'Quitar etiqueta Vegetariano',exact:true}).click();await page.getByRole('button',{name:'Guardar plato',exact:true}).click();
@@ -20,7 +20,7 @@ test('añade etiquetas libres, las busca, las edita y usa cualquier receta en co
  const day=await page.getByLabel('Semana del',{exact:true}).inputValue();
  for(const meal of ['comida','cena']){
   await page.getByRole('button',{name:`Añadir ${meal} del ${day}`,exact:true}).click();
-  await page.getByRole('combobox',{name:'Etiqueta',exact:true}).selectOption('Rápido y fácil');
+  await page.getByRole('group',{name:'Filtrar por etiquetas'}).getByRole('button',{name:'Rápido y fácil',exact:true}).click();
   await page.getByRole('searchbox',{name:'Buscar plato',exact:true}).fill('rapido');await page.getByRole('button',{name:/Garbanzos de casa/}).click();
  }
  await expect(page.getByRole('article',{name:'Garbanzos de casa',exact:true})).toHaveCount(2);

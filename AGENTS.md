@@ -27,6 +27,8 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 
 - El saludo «Hola, nombre» se muestra pequeño junto al avatar del perfil, también en móvil. El estado de sincronización aparece bajo Home Menu: «Online» al estar suscrito, manteniendo los estados de conexión, reconexión y sin conexión. No hay separador entre cabecera y contenido.
 
+- Carta: sin botón Actualizar; conservar actualización automática y reintentos ante errores. Ver archivados al pie abre un diálogo con Desarchivar. En las tarjetas, título y descripción sobre una transparencia negra al pie de la foto. Los filtros de etiquetas son una fila deslizable con selección múltiple (exigir todas), resaltado del tema y Limpiar filtros; compartirlos con el selector del menú.
+
 ## Implementación
 
 - React, TypeScript estricto, Vite y Tailwind; Cloudflare Pages y Supabase. Prefiere herramientas y scripts ya presentes; utiliza el lockfile y no mezcles gestores.

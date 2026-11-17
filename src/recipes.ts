@@ -19,9 +19,10 @@ export function validateTags(tags:string[]){
  return null;
 }
 export function recipeTags(recipes:Recipe[]){return cleanTags(recipes.flatMap(recipe=>recipe.tags)).sort((a,b)=>a.localeCompare(b,'es'));}
-export function filterRecipes(recipes:Recipe[],search:string,tag:string,archived:boolean){
+export function filterRecipes(recipes:Recipe[],search:string,tag:string|string[],archived:boolean){
+ const tags=typeof tag==='string'?(tag?[tag]:[]):tag;
  const words=searchKey(search).trim().split(/\s+/u).filter(Boolean);
- return recipes.filter(recipe=>recipe.archived===archived&&(!tag||recipe.tags.some(value=>tagKey(value)===tagKey(tag)))&&words.every(word=>searchKey([recipe.name,...recipe.tags].join(' ')).includes(word)));
+ return recipes.filter(recipe=>recipe.archived===archived&&tags.every(tag=>recipe.tags.some(value=>tagKey(value)===tagKey(tag)))&&words.every(word=>searchKey([recipe.name,...recipe.tags].join(' ')).includes(word)));
 }
 function client() { if (!supabase) throw new Error('Supabase no configurado'); return supabase; }
 export async function loadRecipeBook(houseId: string) {

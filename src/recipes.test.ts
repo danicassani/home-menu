@@ -35,3 +35,9 @@ it('limita el número y longitud de etiquetas contando caracteres Unicode',()=>{
  expect(validateTags(Array.from({length:21},(_,index)=>String(index)))).toContain('20');
  expect(validateTags(['   '])).toContain('40');
 });
+it('exige todas las etiquetas seleccionadas y mantiene la búsqueda y el archivo',()=>{
+ const dishes=[dish('Arroz',['Rápido','Vegetariano']),dish('Pasta',['Rápido']),dish('Sopa',['Vegetariano']),dish('Antiguo',['Rápido','Vegetariano'],true)];
+ expect(filterRecipes(dishes,'',['RÁPIDO','vegetariano'],false).map(recipe=>recipe.id)).toEqual(['Arroz']);
+ expect(filterRecipes(dishes,'pasta',['Rápido','Vegetariano'],false)).toEqual([]);
+ expect(filterRecipes(dishes,'',[],false)).toHaveLength(3);
+});
