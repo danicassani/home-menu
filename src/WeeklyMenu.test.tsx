@@ -63,3 +63,20 @@ it('muestra dentro del diálogo los errores al cambiar alternativas sin retirar 
  expect(screen.getByRole('article',{name:'Pollo'})).toBeInTheDocument();
  expect(within(dialog).getByRole('combobox',{name:'Pollo'})).toHaveValue('chicken');
 });
+it('oculta añadir en turnos ocupados y lo recupera solo al quitar el último plato',async()=>{
+ const other={...entry,id:'other'};
+ api.loadMenuWeek.mockResolvedValue({revision:2,entries:[entry,other]});
+ api.changeMenuWeek.mockResolvedValueOnce({revision:3,entries:[other]}).mockResolvedValueOnce({revision:4,entries:[]});
+ render(<WeeklyMenu houseId="house" online/>);
+ const slot=await screen.findByRole('region',{name:`${current} Comida`});
+ await waitFor(()=>expect(within(slot).getAllByRole('article')).toHaveLength(2));
+ expect(within(slot).queryByRole('button',{name:`Añadir comida del ${current}`})).not.toBeInTheDocument();
+ expect(within(slot).getAllByRole('heading',{name:'Comida: Pollo'})).toHaveLength(2);
+ expect(within(slot).queryByRole('heading',{name:'Comida'})).not.toBeInTheDocument();
+ fireEvent.click(within(slot).getAllByRole('button',{name:'Quitar'})[0]);
+ await waitFor(()=>expect(within(slot).getAllByRole('article')).toHaveLength(1));
+ expect(within(slot).queryByRole('button',{name:`Añadir comida del ${current}`})).not.toBeInTheDocument();
+ fireEvent.click(within(slot).getByRole('button',{name:'Quitar'}));
+ expect(await within(slot).findByRole('button',{name:`Añadir comida del ${current}`})).toBeEnabled();
+ expect(within(slot).getByRole('heading',{name:'Comida'})).toBeInTheDocument();
+});

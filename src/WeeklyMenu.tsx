@@ -83,13 +83,13 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
       <div className="week-grid">{Array.from({length:7},(_,index)=>addDays(week,index)).map(day=><section className="menu-day" key={day} aria-label={dayLabel(day)} aria-current={day===today?'date':undefined}>
         <h3>{dayLabel(day)}</h3>
         {(Object.entries(meals) as [Meal,string][]).map(([meal,label])=><section key={meal} className="meal-slot" aria-label={`${day} ${label}`}>
-          <div className="section-heading"><h4>{label}</h4><button className="secondary compact" disabled={disabled||Boolean(error)} aria-label={`Añadir ${label.toLowerCase()} del ${day}`} onClick={()=>choose(day,meal)}>+</button></div>
+          {!data.entries.some(entry=>entry.planned_day===day&&entry.meal===meal)&&<div className="section-heading"><h4>{label}</h4><button className="secondary compact" disabled={disabled||Boolean(error)} aria-label={`Añadir ${label.toLowerCase()} del ${day}`} onClick={()=>choose(day,meal)}>+</button></div>}
           {data.entries.filter(e=>e.planned_day===day&&e.meal===meal).map(entry=>{
             const recipe=recipes.find(r=>r.id===entry.recipe_id);
             return <article className="planned-recipe" key={entry.id} aria-label={recipe?.name||'Plato no disponible'}>
               <button type="button" className="planned-cover" aria-label={`Abrir ${recipe?.name||'plato'}`} disabled={!recipe} onClick={()=>setPreview(entry.id)}>
                 {recipe?.photoUrl?<img src={recipe.photoUrl} alt="" loading="lazy"/>:<div className="recipe-photo-empty" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="24" cy="24" r="15"/><circle cx="24" cy="24" r="10"/></svg></div>}
-                <div className="planned-title"><h5>{recipe?.name||'Plato no disponible'}</h5>{recipe?.archived&&<span>Archivado</span>}</div>
+                <div className="planned-title"><h5>{label}: {recipe?.name||'Plato no disponible'}</h5>{recipe?.archived&&<span>Archivado</span>}</div>
               </button>
               <div className="planned-actions">
                 <button type="button" aria-label="Sustituir" title="Sustituir" disabled={disabled||Boolean(error)} onClick={()=>choose(day,meal,entry.id)}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7a8 8 0 0 0-14-2L3 8m0-5v5h5M4 17a8 8 0 0 0 14 2l3-3m0 5v-5h-5"/></svg></button>
