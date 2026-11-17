@@ -40,10 +40,12 @@ test('sincroniza menú, alternativas y marcas entre dos miembros sin recargar',a
   await page.getByRole('button',{name:/Pollo al horno Con verduras/}).click();
   await expect(other.getByRole('checkbox',{name:'Pollo',exact:true})).toBeVisible();
   const entry=page.getByRole('article',{name:'Pollo al horno',exact:true});
-  await entry.getByText('Ingredientes',{exact:true}).click();
-  await entry.getByRole('combobox',{name:'Pollo',exact:true}).selectOption({label:'Tofu'});
+  await entry.getByRole('button',{name:'Abrir Pollo al horno',exact:true}).click();
+  const detail=page.getByRole('dialog',{name:'Pollo al horno',exact:true});
+  await detail.getByRole('combobox',{name:'Pollo',exact:true}).selectOption({label:'Tofu'});
   await expect(other.getByRole('checkbox',{name:'Tofu',exact:true})).toBeVisible();
   await expect(other.getByRole('checkbox',{name:'Pollo',exact:true})).toHaveCount(0);
+  await detail.getByRole('button',{name:'Cerrar plato',exact:true}).click();
   await page.getByRole('button',{name:'Compra',exact:true}).click();
   await other.getByRole('checkbox',{name:'Tofu',exact:true}).click();
   await expect(page.getByText('Todo comprado.',{exact:true})).toBeVisible();

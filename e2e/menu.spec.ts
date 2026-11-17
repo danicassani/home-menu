@@ -16,17 +16,20 @@ test('añade varias apariciones, elige alternativas y sustituye solo una',async(
  }
  await expect(slot.getByRole('article')).toHaveCount(2);
  const first=slot.getByRole('article').first();
- await first.getByText('Ingredientes',{exact:true}).click();
- await first.getByRole('combobox',{name:'Pollo',exact:true}).selectOption({label:'Tofu'});
- await expect(first.getByRole('combobox',{name:'Pollo',exact:true})).toHaveValue('00000000-0000-0000-0000-000000000022');
- await slot.getByRole('article').nth(1).getByText('Ingredientes',{exact:true}).click();
- await expect(slot.getByRole('article').nth(1).getByRole('combobox',{name:'Pollo',exact:true})).toHaveValue('00000000-0000-0000-0000-000000000021');
+ await first.getByRole('button',{name:'Abrir Pollo al horno',exact:true}).click();
+ const detail=page.getByRole('dialog',{name:'Pollo al horno',exact:true});
+ await detail.getByRole('combobox',{name:'Pollo',exact:true}).selectOption({label:'Tofu'});
+ await expect(detail.getByRole('combobox',{name:'Pollo',exact:true})).toHaveValue('00000000-0000-0000-0000-000000000022');
+ await detail.getByRole('button',{name:'Cerrar plato',exact:true}).click();
+ await slot.getByRole('article').nth(1).getByRole('button',{name:'Abrir Pollo al horno',exact:true}).click();
+ await expect(detail.getByRole('combobox',{name:'Pollo',exact:true})).toHaveValue('00000000-0000-0000-0000-000000000021');
+ await detail.getByRole('button',{name:'Cerrar plato',exact:true}).click();
  await first.getByRole('button',{name:'Sustituir'}).click();
  await page.getByRole('button',{name:/Pollo al horno Con verduras/}).click();
  await expect(slot.getByRole('article')).toHaveCount(2);
- // La sustitución vuelve a montar la lista; el estado abierto de details puede conservarse.
- const details=first.locator('details');if(!await details.evaluate((element:HTMLDetailsElement)=>element.open))await first.getByText('Ingredientes',{exact:true}).click();
- await expect(first.getByRole('combobox',{name:'Pollo',exact:true})).toHaveValue('00000000-0000-0000-0000-000000000021');
+ await first.getByRole('button',{name:'Abrir Pollo al horno',exact:true}).click();
+ await expect(detail.getByRole('combobox',{name:'Pollo',exact:true})).toHaveValue('00000000-0000-0000-0000-000000000021');
+ await detail.getByRole('button',{name:'Cerrar plato',exact:true}).click();
  await first.getByRole('button',{name:'Quitar'}).click();
  await expect(slot.getByRole('article')).toHaveCount(1);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);

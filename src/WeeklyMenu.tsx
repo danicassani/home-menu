@@ -4,6 +4,7 @@ import { addDays, calendarDay, changeMenuWeek, copyMenuWeek, dayLabel, monday, w
 import { useOffline } from './offline';
 import { readBook, readMenu } from './offlineResources';
 import WeekNavigation from './WeekNavigation';
+import PlannedRecipeDetails from './PlannedRecipeDetails';
 import RecipeFilters from './RecipeFilters';
 import { useRealtimeRefresh } from './realtime';
 type Selection = { day:string; meal:Meal; entry?:string; revision:number };
@@ -21,11 +22,12 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
   const [error,setError]=useState('');
   const [retry,setRetry]=useState(0);
   const [selection,setSelection]=useState<Selection|null>(null);
+  const [preview,setPreview]=useState<string|null>(null);
   const [search,setSearch]=useState('');
   const [filter,setFilter]=useState<string[]>([]);
   const generation=useRef(0),loaded=useRef('');
-  useRealtimeRefresh(busy||Boolean(selection),setRetry);
-  useEffect(()=>{setSource(addDays(week,-7));},[week]);
+  useRealtimeRefresh(busy||Boolean(selection)||Boolean(preview),setRetry);
+  useEffect(()=>{setSource(addDays(week,-7));setPreview(null);},[week]);
   useEffect(()=>{
     let active=true;const ticket=++generation.current;const key=houseId+week;
     if(loaded.current!==key)setLoading(true);setError('');
@@ -35,11 +37,12 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
     return ()=>{active=false;};
   },[houseId,week,retry,online,workspace]);
   useEffect(()=>{
-    const refresh=()=>{if(document.visibilityState==='visible'&&!busy&&!selection)setRetry(n=>n+1);};
+    const refresh=()=>{if(document.visibilityState==='visible'&&!busy&&!selection&&!preview)setRetry(n=>n+1);};
     document.addEventListener('visibilitychange',refresh);return()=>document.removeEventListener('visibilitychange',refresh);
-  },[busy,selection]);
+  },[busy,selection,preview]);
   const disabled=busy||loading||!online;
-  const name=(id:string)=>ingredients.find(i=>i.id===id)?.name||'Ingrediente';
+  const previewEntry=data.entries.find(entry=>entry.id===preview);
+  const previewRecipe=recipes.find(recipe=>recipe.id===previewEntry?.recipe_id);
   async function change(change:MenuChange,expectedRevision=data.revision) {
     if(disabled)return;generation.current++;setBusy(true);setError('');
     try{const result=await changeMenuWeek(week,expectedRevision,change);setData(result);await workspace?.cache('menu:'+week,result);setSelection(null);}
@@ -77,18 +80,20 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
           {data.entries.filter(e=>e.planned_day===day&&e.meal===meal).map(entry=>{
             const recipe=recipes.find(r=>r.id===entry.recipe_id);
             return <article className="planned-recipe" key={entry.id} aria-label={recipe?.name||'Plato no disponible'}>
-              <h5>{recipe?.name||'Plato no disponible'}</h5>{recipe?.archived&&<span className="archived-label">Archivado</span>}
+              <button type="button" className="planned-cover" aria-label={`Abrir ${recipe?.name||'plato'}`} disabled={!recipe} onClick={()=>setPreview(entry.id)}>
+                {recipe?.photoUrl?<img src={recipe.photoUrl} alt="" loading="lazy"/>:<div className="recipe-photo-empty" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="24" cy="24" r="15"/><circle cx="24" cy="24" r="10"/></svg></div>}
+                <div className="planned-title"><h5>{recipe?.name||'Plato no disponible'}</h5>{recipe?.archived&&<span>Archivado</span>}</div>
+              </button>
+              <div className="planned-actions">
+                <button type="button" aria-label="Sustituir" title="Sustituir" disabled={disabled||Boolean(error)} onClick={()=>choose(day,meal,entry.id)}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7a8 8 0 0 0-14-2L3 8m0-5v5h5M4 17a8 8 0 0 0 14 2l3-3m0 5v-5h-5"/></svg></button>
+                <button type="button" aria-label="Quitar" title="Quitar" disabled={disabled||Boolean(error)} onClick={()=>void change({action:'remove',entry:entry.id})}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></svg></button>
+              </div>
               {entry.choices_reset&&<div className="menu-notice"><p role="status">La receta cambió. Revisa los ingredientes y sus alternativas.</p><button className="secondary compact" disabled={disabled} onClick={()=>void change({action:'ack',entry:entry.id})}>Entendido</button></div>}
-              {recipe&&<details><summary>Ingredientes</summary><ul className="menu-ingredients">{recipe.lines.map(line=><li key={line.id}>{line.alternatives.length?<label>{name(line.ingredient_id)}<select disabled={disabled||Boolean(error)} value={entry.choices.find(c=>c.ingredient_id===line.ingredient_id)?.alternative_id||line.ingredient_id} onChange={e=>{
-                const choices=entry.choices.filter(c=>c.ingredient_id!==line.ingredient_id);
-                if(e.target.value!==line.ingredient_id)choices.push({ingredient_id:line.ingredient_id,alternative_id:e.target.value});
-                void change({action:'choices',entry:entry.id,choices});
-              }}><option value={line.ingredient_id}>{name(line.ingredient_id)}</option>{line.alternatives.map(id=><option key={id} value={id}>{name(id)}</option>)}</select></label>:name(line.ingredient_id)}</li>)}</ul></details>}
-              <div className="planned-actions"><button className="secondary compact" disabled={disabled||Boolean(error)} onClick={()=>choose(day,meal,entry.id)}>Sustituir</button><button className="secondary compact" disabled={disabled||Boolean(error)} onClick={()=>void change({action:'remove',entry:entry.id})}>Quitar</button></div>
             </article>;
           })}
         </section>)}
       </section>)}</div>
     </>}
+    {previewEntry&&previewRecipe&&<PlannedRecipeDetails entry={previewEntry} recipe={previewRecipe} ingredients={ingredients} disabled={disabled||Boolean(error)} error={error} onChoices={choices=>void change({action:'choices',entry:previewEntry.id,choices})} onClose={()=>setPreview(null)}/>}
   </section>;
 }
