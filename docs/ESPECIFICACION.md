@@ -27,9 +27,10 @@ El saludo «Hola, nombre» se muestra pequeño junto al avatar del perfil, tambi
 Las etiquetas se normalizan a NFC con espacios compactados, sin duplicados por mayúsculas. Se admiten 0–20 etiquetas de 1–40 caracteres Unicode por receta. El editor ofrece etiquetas de la casa como sugerencias, permite añadirlas con Enter/+ y quitar chips, y recoge una etiqueta escrita pendiente al guardar.
 
 - Alta manual de platos con nombre, descripción breve, foto opcional, ingredientes y receta. Etiquetas libres opcionales por receta, independientes de los turnos de comida y cena.
-- Tarjetas con nombre, foto y descripción. La ficha presenta foto, descripción, ingredientes y receta, en ese orden; omitir la foto cuando no exista.
-- Buscar por nombre y etiquetas sin distinguir mayúsculas ni acentos; permitir filtrar por una etiqueta. No es obligatorio introducir etiquetas, tiempos ni raciones para esta primera versión.
-- Archivar platos los retira de nuevas selecciones, conservando referencias desde menús existentes.
+- Tarjetas con nombre y descripción sobre una transparencia negra al pie de la foto. La ficha presenta foto, descripción, ingredientes y receta, en ese orden; omitir la foto cuando no exista.
+- Buscar por nombre y etiquetas sin distinguir mayúsculas ni acentos; permitir seleccionar varias etiquetas en una fila horizontal deslizable, tanto en Carta como en el selector del menú. Exigir todas las seleccionadas, resaltarlas con el tema y ofrecer Limpiar filtros debajo de la fila sin borrar la búsqueda. No es obligatorio introducir etiquetas, tiempos ni raciones para esta primera versión.
+- Archivar platos los retira de nuevas selecciones, conservando referencias desde menús existentes. Ver archivados al pie de Carta abre un diálogo con opción de desarchivar cada plato; exige conexión para restaurar y conserva errores y foco.
+- Actualizar la Carta automáticamente mediante Realtime, reconexión y vuelta a la pestaña. No mostrar Actualizar; mantener reintentos cuando hay errores.
 - El selector de foto es un icono de cámara sin texto visible. Permite mover y ampliar el encuadre 4:3 con ratón, táctil o teclado, confirmar/cancelar y reajustar. Solo se sube el JPEG generado al guardar el plato; cancelar conserva la foto anterior.
 - Las fotos son privadas de la casa; validar formato y tamaño tanto en la interfaz como en almacenamiento. Para v1: JPEG, PNG o WebP y máximo 5 MB.
 

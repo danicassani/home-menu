@@ -4,6 +4,7 @@ import { addDays, calendarDay, changeMenuWeek, copyMenuWeek, dayLabel, monday, w
 import { useOffline } from './offline';
 import { readBook, readMenu } from './offlineResources';
 import WeekNavigation from './WeekNavigation';
+import RecipeFilters from './RecipeFilters';
 import { useRealtimeRefresh } from './realtime';
 type Selection = { day:string; meal:Meal; entry?:string; revision:number };
 export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{houseId:string;online:boolean;selectedWeek?:string;onWeekChange?:(week:string)=>void}) {
@@ -21,7 +22,7 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
   const [retry,setRetry]=useState(0);
   const [selection,setSelection]=useState<Selection|null>(null);
   const [search,setSearch]=useState('');
-  const [filter,setFilter]=useState('');
+  const [filter,setFilter]=useState<string[]>([]);
   const generation=useRef(0),loaded=useRef('');
   useRealtimeRefresh(busy||Boolean(selection),setRetry);
   useEffect(()=>{setSource(addDays(week,-7));},[week]);
@@ -54,7 +55,7 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
     catch{setError('No se ha podido copiar. Comprueba que la semana de origen tenga platos y actualiza.');}
     finally{setBusy(false);}
   }
-  function choose(day:string,meal:Meal,entry?:string){setSelection({day,meal,entry,revision:data.revision});setSearch('');setFilter('');}
+  function choose(day:string,meal:Meal,entry?:string){setSelection({day,meal,entry,revision:data.revision});setSearch('');setFilter([]);}
   return <section className="weekly-menu" aria-label="Menú semanal">
     <div className="section-heading"><h2>Semana</h2><button className="secondary compact" disabled={busy||loading} onClick={()=>{setSelection(null);setRetry(n=>n+1);}}>Actualizar semana</button></div>
     <WeekNavigation week={week} disabled={busy||loading||Boolean(selection)} onChange={setWeek}/>
@@ -62,7 +63,7 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
     {loading?<p role="status">Cargando semana…</p>:selection?<section className="menu-picker" aria-label="Elegir plato">
       <div className="section-heading"><h3>{selection.entry?'Sustituir plato':'Añadir plato'}</h3><button className="secondary" disabled={busy} onClick={()=>setSelection(null)}>Cancelar selección</button></div>
       <p>{dayLabel(selection.day)} · {meals[selection.meal]}</p>
-      <div className="recipe-filters"><label>Buscar plato<input type="search" value={search} onChange={e=>setSearch(e.target.value)}/></label><label>Etiqueta<select value={filter} onChange={e=>setFilter(e.target.value)}><option value="">Todas</option>{recipeTags(recipes).map(tag=><option key={tag} value={tag}>{tag}</option>)}</select></label></div>
+      <RecipeFilters search={search} onSearch={setSearch} tags={recipeTags(recipes.filter(recipe=>!recipe.archived))} selected={filter} onSelect={setFilter}/>
       <ul className="menu-picker-list">{filterRecipes(recipes,search,filter,false).map(recipe=><li key={recipe.id}><button className="secondary menu-picker-item" disabled={disabled} onClick={()=>void change({action:selection.entry?'replace':'add',entry:selection.entry,day:selection.day,meal:selection.meal,recipe:recipe.id},selection.revision)}>
         {recipe.photoUrl&&<img src={recipe.photoUrl} alt=""/>}<span><strong>{recipe.name}</strong>{recipe.description&&<span>{recipe.description}</span>}{recipe.tags.length>0&&<span className="tag-badges">{recipe.tags.map(tag=><span key={tag}>{tag}</span>)}</span>}</span>
       </button></li>)}</ul>

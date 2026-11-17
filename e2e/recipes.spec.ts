@@ -33,10 +33,11 @@ test('archiva y restaura un plato sin eliminarlo',async({page})=>{
  page.on('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'Archivar plato'}).click();
  await expect(page.getByText('Aún no hay platos.')).toBeVisible();
- await page.getByLabel('Archivados',{exact:true}).check();
- await page.getByRole('button',{name:/Pollo al horno/}).click();
- await page.getByRole('button',{name:'Restaurar plato'}).click();
- await page.getByLabel('Archivados',{exact:true}).uncheck();
+ const trigger=page.getByRole('button',{name:'Ver archivados',exact:true});await trigger.click();
+ const dialog=page.getByRole('dialog',{name:'Archivados',exact:true});
+ await dialog.getByRole('button',{name:'Desarchivar Pollo al horno',exact:true}).click();
+ await expect(dialog.getByText('No hay platos archivados.')).toBeVisible();
+ await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible();await expect(trigger).toBeFocused();
  await expect(page.getByRole('button',{name:/Pollo al horno/})).toBeVisible();
 });
 

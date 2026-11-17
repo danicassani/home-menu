@@ -9,6 +9,7 @@ import type { Recipe } from './recipes';
 const ingredients=[{id:'chicken',name:'Pollo',kcal_per_100g:null},{id:'tofu',name:'Tofu',kcal_per_100g:80}];
 const recipe:Recipe={id:'dish',name:'Pollo al horno',description:'Con verduras',instructions:'Hornear 30 minutos.',tags:['Al horno'],photo_path:null,revision:3,archived:false,lines:[{id:'line',ingredient_id:'chicken',alternatives:['tofu']}]};
 beforeEach(()=>{
+ HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};
  api.loadRecipeBook.mockResolvedValue({recipes:[recipe],ingredients,photoError:false});
  api.saveRecipe.mockResolvedValue(undefined);api.archiveRecipe.mockResolvedValue(undefined);
 });
@@ -21,7 +22,9 @@ it('filtra por nombre y etiqueta y abre la ficha con alternativas',async()=>{
  fireEvent.click(screen.getByRole('button',{name:'Volver a carta'}));
  fireEvent.change(screen.getByLabelText('Buscar plato'),{target:{value:'sin coincidencias'}});
  expect(screen.getByText('No hay platos con estos filtros.')).toBeInTheDocument();
- fireEvent.change(screen.getByLabelText('Etiqueta'),{target:{value:''}});
+ fireEvent.click(screen.getByRole('button',{name:'Al horno'}));
+ expect(screen.getByRole('button',{name:'Al horno'})).toHaveAttribute('aria-pressed','true');
+ fireEvent.click(screen.getByRole('button',{name:'Limpiar filtros'}));
  fireEvent.change(screen.getByLabelText('Buscar plato'),{target:{value:'POLLO'}});
  expect(screen.getByRole('button',{name:/Pollo al horno/})).toBeInTheDocument();
 });
@@ -62,10 +65,14 @@ it('solo archiva tras confirmación y admite restaurar desde Archivados',async()
  confirm.mockReturnValue(true);
  api.loadRecipeBook.mockResolvedValue({recipes:[{...recipe,archived:true}],ingredients,photoError:false});
  fireEvent.click(screen.getByRole('button',{name:'Archivar plato'}));
- await screen.findByLabelText('Archivados');
- fireEvent.click(screen.getByLabelText('Archivados'));
- fireEvent.click(await screen.findByRole('button',{name:/Pollo al horno/}));
- expect(screen.getByRole('button',{name:'Restaurar plato'})).toBeInTheDocument();confirm.mockRestore();
+ fireEvent.click(await screen.findByRole('button',{name:'Ver archivados'}));
+ const dialog=await screen.findByRole('dialog',{name:'Archivados'});
+ api.loadRecipeBook.mockResolvedValue({recipes:[recipe],ingredients,photoError:false});
+ fireEvent.click(within(dialog).getByRole('button',{name:'Desarchivar Pollo al horno'}));
+ await waitFor(()=>expect(api.archiveRecipe).toHaveBeenLastCalledWith(expect.objectContaining({id:'dish',archived:true})));
+ await within(dialog).findByText('No hay platos archivados.');
+ fireEvent.click(within(dialog).getByRole('button',{name:'Cerrar archivados'}));
+ expect(await screen.findByRole('button',{name:/Pollo al horno/})).toBeInTheDocument();confirm.mockRestore();
 });
 it('permite reintentar un fallo de carga y desactiva edición offline',async()=>{
  api.loadRecipeBook.mockRejectedValueOnce(new Error('offline'));
@@ -103,4 +110,29 @@ it('guarda etiquetas opcionales y añade el texto pendiente al guardar el plato'
  fireEvent.change(screen.getByLabelText('Nueva etiqueta'),{target:{value:'Vegetariano'}});
  fireEvent.click(screen.getByRole('button',{name:'Guardar plato'}));
  await waitFor(()=>expect(api.saveRecipe).toHaveBeenCalledWith(expect.objectContaining({id:'dish'}),expect.objectContaining({tags:['Muy rápido','Vegetariano']})));
+});
+it('conserva el archivado y permite reintentar si desarchivar falla',async()=>{
+ api.loadRecipeBook.mockResolvedValue({recipes:[{...recipe,archived:true}],ingredients,photoError:false});
+ api.archiveRecipe.mockRejectedValueOnce(new Error('conflicto'));
+ render(<RecipeBook houseId="house" online/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Ver archivados'}));
+ const dialog=await screen.findByRole('dialog',{name:'Archivados'});
+ fireEvent.click(within(dialog).getByRole('button',{name:'Desarchivar Pollo al horno'}));
+ expect(await within(dialog).findByRole('alert')).toHaveTextContent('No se ha podido desarchivar');
+ expect(within(dialog).getByRole('button',{name:'Desarchivar Pollo al horno'})).toBeEnabled();
+ expect(screen.queryByRole('button',{name:/^Pollo al horno/})).not.toBeInTheDocument();
+});
+it('combina varias etiquetas, limpia su selección y se actualiza sin botón Actualizar',async()=>{
+ const other={...recipe,id:'other',name:'Pasta',tags:['Rápido']};
+ api.loadRecipeBook.mockResolvedValue({recipes:[{...recipe,tags:['Al horno','Rápido']},other],ingredients,photoError:false});
+ const {rerender}=render(<HouseholdUpdates.Provider value={0}><RecipeBook houseId="house" online/></HouseholdUpdates.Provider>);
+ const quick=await screen.findByRole('button',{name:'Rápido'});fireEvent.click(quick);
+ fireEvent.click(screen.getByRole('button',{name:'Al horno'}));
+ expect(screen.queryByRole('button',{name:/^Pasta/})).not.toBeInTheDocument();
+ expect(screen.getByRole('button',{name:/^Pollo al horno/})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Limpiar filtros'}));expect(screen.getByRole('button',{name:/^Pasta/})).toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'Actualizar'})).not.toBeInTheDocument();
+ api.loadRecipeBook.mockResolvedValue({recipes:[other],ingredients,photoError:false});
+ rerender(<HouseholdUpdates.Provider value={1}><RecipeBook houseId="house" online/></HouseholdUpdates.Provider>);
+ await waitFor(()=>expect(screen.queryByRole('button',{name:/^Pollo al horno/})).not.toBeInTheDocument());
 });

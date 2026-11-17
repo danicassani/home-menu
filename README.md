@@ -181,11 +181,17 @@ npm run test:pwa
 `test:pwa` compila con configuración ficticia de pruebas y sirve el build en un puerto aislado. Comprueba service worker, recarga offline con sesión caducada, persistencia de marcas, limpieza al cerrar sesión y ausencia de respuestas privadas en Cache Storage. También prueba una actualización real del service worker: aviso aplazado detrás del perfil, cancelación sin perder un borrador y recarga al aceptar. La suite se ejecuta en serie porque cambia temporalmente el worker del build. CI ejecuta ambas suites de navegador y guarda sus trazas si hay fallos. Genera de nuevo el build con tu configuración habitual si vas a desplegar después. Playwright usa Chromium con viewports móvil/escritorio y Auth/HTTP/WebSocket simulados; no acredita instalación real en Android/iPhone. Las pruebas SQL locales cubren también reintentos, permisos y pertenencias antiguas. Queda validar los servicios remotos y los dispositivos reales.
 
 
+## Carta
+
+La carta se actualiza automáticamente con Realtime, al recuperar la conexión y al volver a la pestaña; no hay botón Actualizar. Los errores de carga o de fotos conservan una opción específica para reintentar. El título y la descripción de cada tarjeta se superponen sobre una transparencia negra pegada al pie de la foto; los platos sin foto conservan un fondo ilustrado.
+
+«Ver archivados» está al final de la carta y abre un diálogo independiente de los filtros activos. Cada plato tiene una opción Desarchivar; la operación requiere conexión y conserva la receta y sus referencias. Escape o la X cierran el diálogo y devuelven el foco al botón. Los archivados siguen disponibles en los menús existentes.
+
 ## Etiquetas y retirada de desayunos
 
 Las recetas admiten etiquetas libres opcionales, sin categorías fijas de comida o cena. Escríbelas en Nueva etiqueta y confirma con Enter o +; Guardar plato también recoge el texto pendiente. Se sugieren etiquetas de la casa y se pueden quitar individualmente. Se normalizan los espacios y Unicode, se deduplican sin distinguir mayúsculas y se admiten hasta 20 etiquetas de 40 caracteres por receta. Las recetas sin etiquetas siguen siendo válidas.
 
-La carta y el selector de platos del menú buscan por nombre y etiquetas, sin distinguir mayúsculas ni acentos; también permiten filtrar por una etiqueta. Las etiquetas no restringen los turnos de planificación: cualquier receta puede colocarse en comida o cena. No hay opción de añadir desayunos, ni en la interfaz ni en PostgreSQL.
+La carta y el selector de platos del menú buscan por nombre y etiquetas, sin distinguir mayúsculas ni acentos; también permiten seleccionar varias etiquetas en una fila de texto deslizable. Los resultados deben tener todas las etiquetas seleccionadas. La selección se ilumina con el color del tema y «Limpiar filtros» la desactiva sin borrar la búsqueda. Las etiquetas no restringen los turnos de planificación: cualquier receta puede colocarse en comida o cena. No hay opción de añadir desayunos, ni en la interfaz ni en PostgreSQL.
 
 **Nueva migración:** aplicar una vez `supabase/migrations/202611160005_recipe_tags.sql`, después de las siete anteriores y antes de desplegar. Conserva todas las recetas y sustituye las categorías antiguas por listas vacías de etiquetas. Elimina los desayunos ya planificados y sus alternativas, aumenta la revisión de las semanas afectadas y recalcula la compra. Mantiene los productos manuales y las marcas de los productos que sigan siendo necesarios. No borra platos, ingredientes ni fotos.
 
