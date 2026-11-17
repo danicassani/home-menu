@@ -10,6 +10,13 @@ import { useRealtimeRefresh } from './realtime';
 type Selection = { day:string; meal:Meal; entry?:string; revision:number };
 export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{houseId:string;online:boolean;selectedWeek?:string;onWeekChange?:(week:string)=>void}) {
   const workspace=useOffline();
+  const [today,setToday]=useState(()=>calendarDay(new Date()));
+  useEffect(()=>{
+    const refresh=()=>setToday(calendarDay(new Date()));
+    const timer=setInterval(refresh,60000);
+    document.addEventListener('visibilitychange',refresh);window.addEventListener('focus',refresh);
+    return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',refresh);window.removeEventListener('focus',refresh);};
+  },[]);
   const [localWeek,setLocalWeek]=useState(()=>monday(calendarDay(new Date())));
   const week=selectedWeek??localWeek;
   const setWeek=onWeekChange??setLocalWeek;
@@ -73,7 +80,7 @@ export default function WeeklyMenu({houseId,online,selectedWeek,onWeekChange}:{h
       {!filterRecipes(recipes,search,filter,false).length&&<p className="empty-state">No hay platos con estos filtros.</p>}
     </section>:<>
       <div className="copy-week"><label>Copiar desde<input type="date" value={source} disabled={disabled} onChange={e=>{if(e.target.value)setSource(monday(e.target.value));}}/></label><button className="secondary" disabled={disabled||Boolean(error)||source===week} onClick={()=>void copy()}>Copiar semana</button></div>
-      <div className="week-grid">{Array.from({length:7},(_,index)=>addDays(week,index)).map(day=><section className="menu-day" key={day} aria-label={dayLabel(day)}>
+      <div className="week-grid">{Array.from({length:7},(_,index)=>addDays(week,index)).map(day=><section className="menu-day" key={day} aria-label={dayLabel(day)} aria-current={day===today?'date':undefined}>
         <h3>{dayLabel(day)}</h3>
         {(Object.entries(meals) as [Meal,string][]).map(([meal,label])=><section key={meal} className="meal-slot" aria-label={`${day} ${label}`}>
           <div className="section-heading"><h4>{label}</h4><button className="secondary compact" disabled={disabled||Boolean(error)} aria-label={`Añadir ${label.toLowerCase()} del ${day}`} onClick={()=>choose(day,meal)}>+</button></div>

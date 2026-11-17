@@ -48,7 +48,7 @@ Las etiquetas se normalizan a NFC con espacios compactados, sin duplicados por m
 
 ### Semana
 
-Semana muestra tarjetas con foto panorámica de menor altura y título sobre una transparencia negra al pie. Sustituir (flechas circulares) y Quitar (papelera) son iconos en la esquina superior derecha. Los ingredientes no aparecen en la tarjeta: pulsar la foto o el título abre un diálogo con las alternativas de esa aparición; mantiene los bloqueos offline y los avisos si la receta cambia.
+El día actual se resalta con el color del tema y `aria-current="date"`, según la fecha local; se actualiza al cambiar de día y no se marca en otras semanas. Semana muestra tarjetas con foto panorámica de menor altura y título sobre una transparencia negra al pie. Sustituir (flechas circulares) y Quitar (papelera) son iconos en la esquina superior derecha. Los ingredientes no aparecen en la tarjeta: pulsar la foto o el título abre un diálogo con las alternativas de esa aparición; mantiene los bloqueos offline y los avisos si la receta cambia.
 
 - Semana de lunes a domingo, identificada por su fecha de lunes, sin convertir fechas de calendario a instantes UTC.
 - Cada día tiene comida y cena, con varios platos por turno. Se permiten apariciones repetidas de un mismo plato.

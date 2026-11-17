@@ -188,6 +188,8 @@ button.recipe-card:hover { background: var(--soft); border-color: var(--border);
 .copy-week button { margin: 0 0 2px; }
 .week-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
 .menu-day { border: 1px solid var(--line); border-radius: 16px; padding: 18px; min-width: 0; }
+.menu-day[aria-current=date] { border-color: var(--accent); background: var(--soft); }
+.menu-day[aria-current=date] > h3 { color: var(--accent); }
 .menu-day > h3 { text-transform: capitalize; font-weight: 650; margin: 0 0 16px; font-size: 16px; }
 .meal-slot { padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--line); }
 .meal-slot > .section-heading { margin-bottom: 8px; }
