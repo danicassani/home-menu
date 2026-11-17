@@ -120,7 +120,7 @@ El recorrido integral de aceptación es: acceder con Google, crear una casa, inv
 
 ## Límites y supuestos
 
-Registro abierto con Google y contenido privado por casa. Sin panel global, IA, importación web, nutrición calculada, despensa, pagos, notificaciones push ni recetario público. Las kilocalorías opcionales son metadatos del ingrediente, no una función de nutrición.
+Registro abierto con Google y contenido privado por casa. Sin panel global, IA, importación web, nutrición calculada, despensa, pagos ni notificaciones push. Las kilocalorías opcionales son metadatos del ingrediente, no una función de nutrición.
 
 No mezclar datos de ejemplo con datos reales. La eliminación de una casa incluye sus datos y fotos; no elimina automáticamente las cuentas Google/Supabase de sus miembros. La gestión de borrado de cuenta y las políticas legales deberán definirse antes de un lanzamiento público; no confundir la validación de desarrollo con aprobación de ese lanzamiento.
 
@@ -132,3 +132,12 @@ Los comandos de instalación, desarrollo y comprobación de la base están docum
 La entrega `202611160005_recipe_tags.sql` conserva las recetas, vacía las categorías antiguas al convertirlas en etiquetas y elimina los desayunos planificados, como ha solicitado el usuario. Recalcula la compra de las semanas afectadas conservando aportaciones manuales y marcas aún vigentes; incrementa revisiones para invalidar borradores antiguos. La planificación acepta únicamente `lunch` y `dinner`. El guardado usa `p_tags` y mantiene las garantías de autorización, alternativas y reconciliación.
 
 La actualización de IndexedDB a versión 2 elimina los snapshots incompatibles y conserva identidad, pertenencia y cola de marcas. Tras actualizar es necesaria una visita online para volver a tener snapshots consultables offline. Las marcas de compra se siguen validando por generación de producto en el servidor.
+
+
+## Publicación y catálogo compartido
+
+La carta pública es de lectura para usuarios autenticados. Publicar incluye los ingredientes base y sus alternativas, etiquetas y foto; no comparte miembros, planificación ni datos de la casa. La casa autora edita la publicación y los guardados se sincronizan con las incorporaciones activas, manteniendo IDs privados, alternativas válidas y marcas de compra. Las receptoras no editan el contenido sincronizado. Quitar archiva solo la incorporación propia; se restaura sin duplicar. Las retiradas y la eliminación de la casa autora convierten las incorporaciones en copias privadas editables, con foto y planificación preservadas.
+
+Las publicaciones, ingredientes públicos y relaciones de incorporación son independientes de las tablas privadas. Toda mutación aplica permisos/revisiones en PostgreSQL; los auxiliares de proyección no son invocables por clientes. Las fotos se preparan mediante Edge Function y permanecen en un bucket privado con políticas para publicaciones activas y snapshots autorizados. La limpieza de huérfanos es reintentable y usa Storage API, con reclamaciones que impiden carreras con publicaciones.
+
+Perfil incluye temporalmente gestión de ingredientes privados y, para administradores, públicos. Se editan nombre y kilocalorías opcionales sin borrar ni fusionar. Reutilizar un ingrediente privado no sobrescribe sus datos; las creaciones importadas pueden recibir correcciones hasta que se personalicen o desvinculen. La asignación inicial del administrador se realiza manualmente por UUID de Auth desde SQL Editor. La migración y el despliegue están documentados en README.

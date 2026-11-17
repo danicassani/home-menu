@@ -202,3 +202,24 @@ La carta y el selector de platos del menú buscan por nombre y etiquetas, sin di
 La migración sustituye la función de guardado para aceptar `p_tags`; mantiene permisos, revisiones, reparación de alternativas y recálculo transaccional de la compra. Los editores antiguos no pueden sobrescribir recetas con revisiones previas. No requiere nuevas variables ni secretos y no se ha aplicado en el proyecto remoto.
 
 Al actualizar la app, IndexedDB pasa a versión 2 y retira los snapshots antiguos de carta, menú y compra. Conserva identidad, pertenencia y marcas pendientes. Abre la versión nueva online antes de volver a usarla offline; las marcas pendientes de productos retirados se descartarán al sincronizar y las demás se conservarán.
+
+
+## Carta pública e ingredientes
+
+En la ficha privada, **Publicar** comparte receta, foto, etiquetas, ingredientes y alternativas con usuarios que hayan iniciado sesión. Carta pública está al final de Carta; permite buscar, filtrar y cambiar entre lista/cuadrícula. Las recetas incorporadas aparecen atenuadas con «Ya la tienes» y siguen siendo consultables. Añadir es idempotente; Quitar de la carta archiva únicamente la incorporación de la casa, conservando sus menús. Restaurar recupera la misma incorporación actualizada.
+
+Guardar una receta publicada en su casa autora actualiza la publicación, las incorporaciones activas y la compra en una transacción. Las receptoras no pueden editar ese contenido; sí elegir alternativas por aparición. Dejar de publicar, o iniciar la eliminación de la casa autora, conserva copias privadas editables y fotos en las casas receptoras, sin nuevas actualizaciones. Archivar la receta propia no la despublica. La casa autora puede gestionarla desde su ficha pública.
+
+Perfil → **Ingredientes** permite buscar y editar nombre/kilocalorías de los ingredientes de la casa. Solo administradores pueden abrir el catálogo Público y corregirlo. Al incorporar se reutilizan los ingredientes privados coincidentes sin sobrescribir sus datos. Los ingredientes nuevos siguen las correcciones públicas mientras no se editen localmente ni se retire su última incorporación vinculada. No hay borrado ni fusión de ingredientes. Conflictos de revisión o nombres duplicados conservan el borrador.
+
+**Preparación de esta entrega, antes de fusionar/desplegar:**
+
+1. Aplicar una vez `supabase/migrations/202611170001_public_catalog.sql`, después de las ocho migraciones existentes. No repetir las anteriores. Mantiene recetas, menús y marcas; añade catálogo, permisos y el bucket privado `catalog-photos`.
+2. Desplegar la Edge Function desde la raíz: `supabase functions deploy catalog-publication --project-ref hccniqsjbfzpjhywpcuz`. Su configuración verifica explícitamente cada JWT con Auth.getUser; la clave administrativa solo se usa dentro de Supabase. `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY` son variables del servidor suministradas por la plataforma; no añadir claves administrativas a Cloudflare/Vite.
+3. Ejecutar manualmente `supabase/admin/grant_catalog_admin.sql` sustituyendo el marcador por el UUID de tu cuenta de Authentication → Users. El catálogo empieza sin administradores; los clientes no pueden asignarse el rol. Solo tu cuenta debe recibirlo inicialmente.
+
+Las fotos se copian a un bucket **privado** antes de confirmar una publicación. Cada versión es inmutable; las recetas incorporadas conservan referencias autorizadas a esa versión. Al retirar la publicación, las fotos solo siguen accesibles a las casas que conservan una copia. Las URLs firmadas caducan a los 15 minutos. No se cachean fotos ni respuestas públicas autenticadas en Cache Storage; Carta pública requiere conexión y las incorporadas usan la caché privada existente.
+
+La acción `cleanup` de la misma Edge Function elimina archivos huérfanos con más de 24 horas mediante Storage API y por lotes. Puede invocarla un administrador autenticado o un trabajo de servidor con la credencial administrativa; programa su ejecución diaria en tu infraestructura de Supabase si quieres limpieza automática. Los archivos se reclaman bajo bloqueo antes de borrarse y no se pueden publicar mientras se limpian. Los fallos permiten reintentar; nunca se borran filas de `storage.objects` por SQL. Las fotos referenciadas por publicaciones o copias privadas se conservan.
+
+Comprobaciones: `npm test`, `npm run build`, `npm run test:e2e` y `npm run test:pwa`. La Edge Function también se verifica con `deno check --no-lock --config supabase/functions/catalog-publication/deno.json supabase/functions/catalog-publication/index.ts`. Las pruebas de PostgreSQL son locales (PGlite), las de Storage/Edge y navegador usan servicios simulados. Queda validar el despliegue real, permisos de Storage y dispositivos físicos. No se ha aplicado la migración, asignado administradores ni desplegado la función automáticamente.

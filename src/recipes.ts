@@ -1,8 +1,8 @@
 import { supabase } from './supabase';
-export type Ingredient = { id: string; name: string; kcal_per_100g: number | null };
+export type Ingredient = { id: string; name: string; kcal_per_100g: number | null; revision?:number };
 export type Line = { id: string; ingredient_id: string; alternatives: string[] };
-export type Recipe = { id: string; name: string; description: string; instructions: string; tags: string[]; photo_path: string | null; archived: boolean; revision: number; lines: Line[]; photoUrl?: string };
-export type Draft = Pick<Recipe, 'name'|'description'|'instructions'|'tags'|'photo_path'|'lines'>;
+export type Recipe = { id: string; name: string; description: string; instructions: string; tags: string[]; photo_path: string | null; archived: boolean; revision: number; lines: Line[]; publication_id?:string|null; catalog_imported?:boolean; catalog_photo_path?:string|null; photoUrl?: string };
+export type Draft = Pick<Recipe, 'name'|'description'|'instructions'|'tags'|'photo_path'|'lines'> & {clearPhoto?:boolean};
 export const emptyDraft = (): Draft => ({ name: '', description: '', instructions: '', tags: [], photo_path: null, lines: [] });
 export function validatePhoto(file: File) {
   if (!['image/jpeg','image/png','image/webp'].includes(file.type)) return 'Usa una imagen JPEG, PNG o WebP.';
@@ -43,6 +43,8 @@ export async function loadRecipeBook(houseId: string) {
     photoError = Boolean(urls.error || urls.data?.some(u=>u.error));
     for (const r of mapped) r.photoUrl = urls.data?.find(u=>u.path===r.photo_path)?.signedUrl || undefined;
   }
+  const snapshots=[...new Set(mapped.flatMap(recipe=>recipe.catalog_photo_path?[recipe.catalog_photo_path]:[]))];
+  if(snapshots.length){const urls=await c.storage.from('catalog-photos').createSignedUrls(snapshots,900);photoError=photoError||Boolean(urls.error||urls.data?.some(url=>url.error));for(const recipe of mapped)if(recipe.catalog_photo_path)recipe.photoUrl=urls.data?.find(url=>url.path===recipe.catalog_photo_path)?.signedUrl||undefined;}
   return { recipes: mapped, ingredients:(ingredients.data || []) as Ingredient[], photoError };
 }
 export async function addIngredient(name: string, kcal: string): Promise<Ingredient> {
@@ -59,7 +61,8 @@ export async function uploadPhoto(houseId: string, file: File) {
   return path;
 }
 export async function saveRecipe(original: Recipe | null, draft: Draft) {
-  const result=await client().rpc('save_recipe',{ p_id:original?.id || null, p_revision:original?.revision || null, p_name:draft.name, p_description:draft.description, p_instructions:draft.instructions, p_tags:draft.tags, p_photo_path:draft.photo_path, p_lines:draft.lines });
+  if(original?.publication_id&&!original.catalog_imported){const result=await client().functions.invoke('catalog-publication',{body:{action:'save',recipe:original.id,revision:original.revision,draft}});if(result.error||result.data?.error)throw new Error(result.data?.error||'No se ha podido publicar');return;}
+  const result=await client().rpc('save_recipe',{ p_id:original?.id || null, p_revision:original?.revision || null, p_name:draft.name, p_description:draft.description, p_instructions:draft.instructions, p_tags:draft.tags, p_photo_path:draft.photo_path, p_lines:draft.lines,p_clear_photo:Boolean(draft.clearPhoto) });
   if(result.error) throw result.error;
 }
 export async function archiveRecipe(recipe: Recipe) {

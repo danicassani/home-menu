@@ -383,3 +383,17 @@ button.dialog-close { display: grid; place-items: center; width: 44px; height: 4
  .recipe-grid[data-layout=grid] h3 { font-size: 13px; }
  .recipe-grid[data-layout=grid] p { font-size: 12px; -webkit-line-clamp: 1; }
 }
+
+.public-recipe-card.incorporated > img, .public-recipe-card.incorporated > .recipe-photo-empty { opacity: .45; }
+.public-recipe-card.incorporated .recipe-card-body { background: rgb(0 0 0 / .55); }
+.owned-ribbon { position: absolute; top: 24px; right: -40px; width: 180px; padding: 6px 0; transform: rotate(35deg); background: var(--primary); color: var(--onPrimary); text-align: center; font-size: 12px; font-weight: 650; box-shadow: 0 2px 8px rgb(0 0 0 / .15); }
+.catalog-footer { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+.ingredient-manager { width: min(640px, calc(100% - 32px)); max-height: calc(100svh - 48px); margin: auto; padding: 24px; overflow: auto; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 22px; }
+.ingredient-manager::backdrop { background: rgb(0 0 0 / .5); }
+.ingredient-scope { display: flex; gap: 8px; margin-bottom: 16px; }
+.ingredient-scope button[aria-pressed=true] { background: var(--soft); border-color: var(--accent); }
+.ingredient-management-list { margin: 0; padding: 0; list-style: none; }
+.ingredient-management-list li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.ingredient-management-list li > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ingredient-management-list small { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; }
+.ingredient-management-list button { margin: 0; flex-shrink: 0; }
