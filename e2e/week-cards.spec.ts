@@ -9,6 +9,9 @@ test('muestra fotos bajas, título superpuesto e iconos superiores y abre las al
  await page.reload();
  await page.getByRole('button',{name:'Semana',exact:true}).click();
  const card=page.getByRole('article',{name:'Pollo al horno',exact:true}),cover=card.getByRole('button',{name:'Abrir Pollo al horno',exact:true});
+ await expect(card.getByRole('heading',{name:'Comida: Pollo al horno',exact:true})).toBeVisible();
+ await expect(page.getByRole('article',{name:'Sopa casera',exact:true}).getByRole('heading',{name:'Cena: Sopa casera',exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:`Añadir comida del ${day}`,exact:true})).toHaveCount(0);
  await expect(cover.locator('img')).toBeVisible();await expect(card.getByText('Ingredientes',{exact:true})).toHaveCount(0);await expect(card.getByRole('combobox')).toHaveCount(0);
  const replace=card.getByRole('button',{name:'Sustituir',exact:true}),remove=card.getByRole('button',{name:'Quitar',exact:true});
  expect((await replace.innerText()).trim()).toBe('');expect((await remove.innerText()).trim()).toBe('');

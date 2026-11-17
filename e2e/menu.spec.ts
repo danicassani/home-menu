@@ -8,30 +8,35 @@ test.beforeEach(async({page})=>{
  await expect(page.getByRole('button',{name:'Añadir comida del 2026-12-28'})).toBeEnabled();
 });
 
-test('añade varias apariciones, elige alternativas y sustituye solo una',async({page},testInfo)=>{
+test('añade un plato por turno, elige alternativas y sustituye solo una aparición',async({page},testInfo)=>{
  const slot=page.getByRole('region',{name:'2026-12-28 Comida',exact:true});
- for(let i=0;i<2;i++){
-  await slot.getByRole('button',{name:'Añadir comida del 2026-12-28'}).click();
+ const dinner=page.getByRole('region',{name:'2026-12-28 Cena',exact:true});
+ for(const [region,meal] of [[slot,'comida'],[dinner,'cena']] as const){
+  await region.getByRole('button',{name:`Añadir ${meal} del 2026-12-28`}).click();
   await page.getByRole('button',{name:/Pollo al horno Con verduras/}).click();
+  await expect(region.getByRole('button',{name:`Añadir ${meal} del 2026-12-28`})).toHaveCount(0);
  }
- await expect(slot.getByRole('article')).toHaveCount(2);
+ await expect(slot.getByRole('heading',{name:'Comida: Pollo al horno',exact:true})).toBeVisible();
+ await expect(dinner.getByRole('heading',{name:'Cena: Pollo al horno',exact:true})).toBeVisible();
  const first=slot.getByRole('article').first();
  await first.getByRole('button',{name:'Abrir Pollo al horno',exact:true}).click();
  const detail=page.getByRole('dialog',{name:'Pollo al horno',exact:true});
  await detail.getByRole('combobox',{name:'Pollo',exact:true}).selectOption({label:'Tofu'});
  await expect(detail.getByRole('combobox',{name:'Pollo',exact:true})).toHaveValue('00000000-0000-0000-0000-000000000022');
  await detail.getByRole('button',{name:'Cerrar plato',exact:true}).click();
- await slot.getByRole('article').nth(1).getByRole('button',{name:'Abrir Pollo al horno',exact:true}).click();
+ await dinner.getByRole('article').getByRole('button',{name:'Abrir Pollo al horno',exact:true}).click();
  await expect(detail.getByRole('combobox',{name:'Pollo',exact:true})).toHaveValue('00000000-0000-0000-0000-000000000021');
  await detail.getByRole('button',{name:'Cerrar plato',exact:true}).click();
  await first.getByRole('button',{name:'Sustituir'}).click();
  await page.getByRole('button',{name:/Pollo al horno Con verduras/}).click();
- await expect(slot.getByRole('article')).toHaveCount(2);
+ await expect(slot.getByRole('article')).toHaveCount(1);
  await first.getByRole('button',{name:'Abrir Pollo al horno',exact:true}).click();
  await expect(detail.getByRole('combobox',{name:'Pollo',exact:true})).toHaveValue('00000000-0000-0000-0000-000000000021');
  await detail.getByRole('button',{name:'Cerrar plato',exact:true}).click();
  await first.getByRole('button',{name:'Quitar'}).click();
- await expect(slot.getByRole('article')).toHaveCount(1);
+ await expect(slot.getByRole('article')).toHaveCount(0);
+ await expect(slot.getByRole('button',{name:'Añadir comida del 2026-12-28'})).toBeEnabled();
+ await expect(dinner.getByRole('article')).toHaveCount(1);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
  await page.screenshot({path:testInfo.outputPath('semana.png'),fullPage:true});
 });

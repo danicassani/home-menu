@@ -48,10 +48,10 @@ Las etiquetas se normalizan a NFC con espacios compactados, sin duplicados por m
 
 ### Semana
 
-El día actual se resalta con el color del tema y `aria-current="date"`, según la fecha local; se actualiza al cambiar de día y no se marca en otras semanas. Semana muestra tarjetas con foto panorámica de menor altura y título sobre una transparencia negra al pie. Sustituir (flechas circulares) y Quitar (papelera) son iconos en la esquina superior derecha. Los ingredientes no aparecen en la tarjeta: pulsar la foto o el título abre un diálogo con las alternativas de esa aparición; mantiene los bloqueos offline y los avisos si la receta cambia.
+El día actual se resalta con el color del tema y `aria-current="date"`, según la fecha local; se actualiza al cambiar de día y no se marca en otras semanas. En Semana, el botón + aparece solo en turnos vacíos; los ocupados muestran «Comida: nombre del plato» o «Cena: nombre del plato» sobre la foto, sin cabecera de turno duplicada. Al quitar el último plato reaparece el +. Se conservan las apariciones múltiples ya existentes. Semana muestra tarjetas con foto panorámica de menor altura y título sobre una transparencia negra al pie. Sustituir (flechas circulares) y Quitar (papelera) son iconos en la esquina superior derecha. Los ingredientes no aparecen en la tarjeta: pulsar la foto o el título abre un diálogo con las alternativas de esa aparición; mantiene los bloqueos offline y los avisos si la receta cambia.
 
 - Semana de lunes a domingo, identificada por su fecha de lunes, sin convertir fechas de calendario a instantes UTC.
-- Cada día tiene comida y cena, con varios platos por turno. Se permiten apariciones repetidas de un mismo plato.
+- Cada día tiene comida y cena. Añadir (+) solo aparece en turnos vacíos; conservar y permitir sustituir o quitar todas las apariciones múltiples ya guardadas. Un mismo plato puede repetirse entre turnos o días.
 - Añadir, eliminar individualmente y sustituir platos. Sustituir abre la carta y conserva día y turno; reinicia alternativas a las de la nueva receta.
 - Navegar entre semanas y copiar otra semana. Confirmar antes de sobrescribir una semana con platos.
 - La copia replica platos y alternativas válidas; no copia estados de compra ni productos manuales.
