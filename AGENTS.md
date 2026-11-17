@@ -31,6 +31,8 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 
 ## Implementación
 
+- Carta ofrece dos iconos del color del tema para elegir lista (un plato por fila) o cuadrícula (dos por fila, también en móvil). La selección se conserva en este navegador, sin datos personales. La cabecera y el espacio superior del contenido son compactos.
+
 - React, TypeScript estricto, Vite y Tailwind; Cloudflare Pages y Supabase. Prefiere herramientas y scripts ya presentes; utiliza el lockfile y no mezcles gestores.
 - Diseña primero para móvil, en español, con HTML semántico, etiquetas, foco visible, navegación por teclado y contraste en todos los temas.
 - Normaliza etiquetas (NFC y espacios), deduplica sin distinguir mayúsculas y valida un máximo de 20 etiquetas de 40 caracteres Unicode por receta, también en PostgreSQL. Las categorías antiguas no se convierten en etiquetas.

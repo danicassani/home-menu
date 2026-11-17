@@ -36,3 +36,33 @@ test('combina etiquetas, limpia filtros y mantiene los archivados en un diálogo
  await trigger.click();await dialog.getByRole('button',{name:'Desarchivar Reservado',exact:true}).click();await expect(dialog.getByText('No hay platos archivados.')).toBeVisible();
  await dialog.getByRole('button',{name:'Cerrar archivados',exact:true}).click();await page.getByRole('button',{name:'Limpiar filtros',exact:true}).click();await expect(page.getByRole('button',{name:/^Reservado/})).toBeVisible();
 });
+
+test('alterna lista y cuadrícula de dos columnas con iconos y conserva la selección',async({page},testInfo)=>{
+ const state=createFixtureState();
+ state.recipes.push({...state.recipes[0],id:crypto.randomUUID(),name:'Pasta con verduras'});
+ state.recipes.push({...state.recipes[0],id:crypto.randomUUID(),name:'Sopa casera'});
+ await setupApp(page,state);
+ const list=page.getByRole('button',{name:'Modo lista',exact:true}),grid=page.getByRole('button',{name:'Modo cuadrícula',exact:true});
+ const cards=page.locator('.recipe-card');await expect(cards).toHaveCount(3);
+ await expect(list).toHaveAttribute('aria-pressed','true');
+ const header=await page.locator('header').boundingBox(),title=await page.locator('.catalog-heading').boundingBox();
+ expect(title!.y-(header!.y+header!.height)).toBeLessThanOrEqual(8);
+ const positions=async()=>Promise.all([cards.nth(0).boundingBox(),cards.nth(1).boundingBox(),cards.nth(2).boundingBox()]);
+ let [first,second]=await positions();expect(first!.x).toBe(second!.x);expect(second!.y).toBeGreaterThan(first!.y);
+ await page.getByRole('searchbox',{name:'Buscar plato',exact:true}).fill('Pollo');await grid.focus();await page.keyboard.press('Enter');
+ await expect(cards).toHaveCount(1);await expect(grid).toHaveAttribute('aria-pressed','true');await expect(list).toHaveAttribute('aria-pressed','false');
+ expect((await page.getByRole('group',{name:'Vista de Carta'}).innerText()).trim()).toBe('');
+ expect(await grid.evaluate(element=>getComputedStyle(element).color)).toBe(await page.locator('.brand-mark').evaluate(element=>getComputedStyle(element).backgroundColor));
+ await page.getByRole('searchbox',{name:'Buscar plato',exact:true}).fill('');
+ let third;[first,second,third]=await positions();expect(first!.y).toBe(second!.y);expect(second!.x).toBeGreaterThan(first!.x);expect(third!.y).toBeGreaterThan(first!.y);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
+ await page.screenshot({path:testInfo.outputPath('cuadricula.png'),fullPage:true});
+ await cards.first().click();await page.getByRole('button',{name:'Volver a carta',exact:true}).click();await expect(grid).toHaveAttribute('aria-pressed','true');
+ await page.getByRole('button',{name:'Semana',exact:true}).click();await page.getByRole('button',{name:'Carta',exact:true}).click();await expect(grid).toHaveAttribute('aria-pressed','true');
+ await page.reload();await expect(grid).toHaveAttribute('aria-pressed','true');
+ await page.getByRole('button',{name:'Abrir perfil de Alex',exact:true}).click();const profile=page.getByRole('dialog',{name:'Perfil',exact:true});
+ await profile.getByRole('radio',{name:'Azul',exact:true}).check();await profile.getByRole('switch',{name:'Modo oscuro'}).check();await profile.getByRole('button',{name:'Guardar perfil',exact:true}).click();
+ await expect(grid).toHaveCSS('color','rgb(168, 199, 255)');await page.screenshot({path:testInfo.outputPath('cuadricula-oscura.png'),fullPage:true});
+ await list.click();await page.reload();await expect(list).toHaveAttribute('aria-pressed','true');[first,second]=await positions();expect(first!.x).toBe(second!.x);expect(second!.y).toBeGreaterThan(first!.y);
+ await page.screenshot({path:testInfo.outputPath('lista.png'),fullPage:true});
+});
