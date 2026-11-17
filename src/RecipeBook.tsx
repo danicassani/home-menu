@@ -14,6 +14,8 @@ export default function RecipeBook({ houseId, online }: {houseId:string; online:
   const [error,setError]=useState('');
   const [photoError,setPhotoError]=useState(false);
   const [search,setSearch]=useState('');
+  const [layout,setLayout]=useState<'list'|'grid'>(()=>{try{return localStorage.getItem('home-menu-catalog-layout')==='grid'?'grid':'list';}catch{return 'list';}});
+  useEffect(()=>{try{localStorage.setItem('home-menu-catalog-layout',layout);}catch{/* Visual preference only; the view remains usable. */}},[layout]);
   const [tags,setTags]=useState<string[]>([]);
   const [archived,setArchived]=useState(false);
   const [selected,setSelected]=useState<string|null>(null);
@@ -70,10 +72,13 @@ export default function RecipeBook({ houseId, online }: {houseId:string; online:
         <div className="recipe-actions">{!recipe.archived&&<button disabled={!online||busy} onClick={()=>{setEditingRecipe(recipe);setEditing(true);}}>Editar plato</button>}<button className="secondary" disabled={!online||busy} onClick={()=>void archive()}>{recipe.archived?'Restaurar plato':'Archivar plato'}</button></div>
       </article>
     </>:<>
-      <div className="section-heading"><h2>Carta</h2><button disabled={!online||Boolean(error)} onClick={()=>{setSelected(null);setEditingRecipe(null);setEditing(true);}}>Nuevo plato</button></div>
+      <div className="section-heading catalog-heading"><div className="catalog-heading-start"><h2>Carta</h2><div className="catalog-view-toggle" role="group" aria-label="Vista de Carta">
+        <button type="button" aria-label="Modo lista" aria-pressed={layout==='list'} onClick={()=>setLayout('list')}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M9 5h12M9 12h12M9 19h12M3 5h1M3 12h1M3 19h1"/></svg></button>
+        <button type="button" aria-label="Modo cuadrícula" aria-pressed={layout==='grid'} onClick={()=>setLayout('grid')}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+      </div></div><button disabled={!online||Boolean(error)} onClick={()=>{setSelected(null);setEditingRecipe(null);setEditing(true);}}>Nuevo plato</button></div>
       <RecipeFilters search={search} onSearch={setSearch} tags={recipeTags(recipes.filter(recipe=>!recipe.archived))} selected={tags} onSelect={setTags}/>
       {photoError&&<p role="status">Algunas fotos no se han podido cargar. <button className="secondary compact" onClick={()=>setRetry(n=>n+1)}>Reintentar fotos</button></p>}
-      <div className="recipe-grid">{visible.map(r=><button className="recipe-card" key={r.id} onClick={()=>setSelected(r.id)}>
+      <div className="recipe-grid" data-layout={layout}>{visible.map(r=><button className="recipe-card" key={r.id} onClick={()=>setSelected(r.id)}>
         {r.photoUrl?<img src={r.photoUrl} alt="" loading="lazy"/>:<div className="recipe-photo-empty" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="24" cy="24" r="15"/><circle cx="24" cy="24" r="10"/></svg></div>}
         <div className="recipe-card-body"><h3>{r.name}</h3>{r.description&&<p>{r.description}</p>}</div>
       </button>)}</div>
