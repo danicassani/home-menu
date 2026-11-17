@@ -33,6 +33,10 @@ Tanto el registro como el inicio de sesión se harán con **Google** mediante Su
 
 Las vistas Carta, Semana, Compra y Casa se abren desde una barra inferior fija con cuatro iconos, sin texto visible: plato con cubiertos, calendario, carrito y casa. Conservan etiquetas para lectores de pantalla, foco de teclado y una marca de vista activa. La barra respeta el área segura del móvil y deja espacio para los controles al final de cada vista.
 
+El contenido se presenta directamente sobre el fondo, sin panel exterior ni separador bajo la cabecera. Se mantienen las tarjetas de platos y días, los colores y el espaciado.
+
+El saludo «Hola, nombre» se muestra pequeño junto al avatar del perfil, también en móvil. El estado de sincronización aparece bajo Home Menu: «Online» al estar suscrito, manteniendo los estados de conexión, reconexión y sin conexión. No hay separador entre cabecera y contenido.
+
 ## Perfil y apariencia
 
 Cerrar sesión está únicamente dentro del perfil y sigue disponible sin conexión o si falla la carga de preferencias. La X cierra la ventana sin salir de la cuenta.
@@ -153,7 +157,7 @@ Las pruebas locales verifican aislamiento entre cuentas, permisos anónimos, val
 
 ## PWA y desconexión
 
-La aplicación incorpora manifest, iconos normales/maskable y apple-touch-icon. En navegadores compatibles aparece **Instalar app**. En iPhone/iPad, ese botón muestra la ruta de Safari: Compartir → Añadir a pantalla de inicio. Se necesita HTTPS (localhost también permite probar el service worker). La actualización de una versión instalada ofrece **Actualizar app** y conserva las marcas pendientes.
+La aplicación incorpora manifest, iconos normales/maskable y apple-touch-icon. En navegadores compatibles aparece **Instalar app**. En iPhone/iPad, ese botón muestra la ruta de Safari: Compartir → Añadir a pantalla de inicio. Se necesita HTTPS (localhost también permite probar el service worker). Cuando hay una versión nueva, aparece un diálogo con **Actualizar app** y **Más tarde**; Escape también lo pospone. Solo aceptar provoca la recarga. Si hay otro diálogo abierto, el aviso espera a que se cierre. Posponer conserva la edición y evita repetir el aviso de esa versión durante la sesión; las marcas pendientes se conservan al actualizar. No hay botón de actualización al pie.
 
 Tras una visita online, el shell permite recargar sin conexión. IndexedDB guarda la carta, el catálogo y las semanas de menú/compra que se hayan consultado. No descarga otras semanas automáticamente. Las fotos y sus URLs firmadas no se guardan para uso offline; los textos e ingredientes siguen disponibles. Las preferencias del perfil siguen requiriendo conexión.
 
@@ -174,7 +178,7 @@ npm run test:e2e
 npm run test:pwa
 ```
 
-`test:pwa` compila con configuración ficticia de pruebas y sirve el build en un puerto aislado. Comprueba service worker, recarga offline con sesión caducada, persistencia de marcas, limpieza al cerrar sesión y ausencia de respuestas privadas en Cache Storage. Genera de nuevo el build con tu configuración habitual si vas a desplegar después. Playwright usa Chromium con viewports móvil/escritorio y Auth/HTTP/WebSocket simulados; no acredita instalación real en Android/iPhone. Las pruebas SQL locales cubren también reintentos, permisos y pertenencias antiguas. Queda validar los servicios remotos y los dispositivos reales.
+`test:pwa` compila con configuración ficticia de pruebas y sirve el build en un puerto aislado. Comprueba service worker, recarga offline con sesión caducada, persistencia de marcas, limpieza al cerrar sesión y ausencia de respuestas privadas en Cache Storage. También prueba una actualización real del service worker: aviso aplazado detrás del perfil, cancelación sin perder un borrador y recarga al aceptar. La suite se ejecuta en serie porque cambia temporalmente el worker del build. CI ejecuta ambas suites de navegador y guarda sus trazas si hay fallos. Genera de nuevo el build con tu configuración habitual si vas a desplegar después. Playwright usa Chromium con viewports móvil/escritorio y Auth/HTTP/WebSocket simulados; no acredita instalación real en Android/iPhone. Las pruebas SQL locales cubren también reintentos, permisos y pertenencias antiguas. Queda validar los servicios remotos y los dispositivos reales.
 
 
 ## Etiquetas y retirada de desayunos

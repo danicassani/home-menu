@@ -4,7 +4,7 @@ const auth = vi.hoisted(() => ({ getSession: vi.fn(), onAuthStateChange: vi.fn()
 vi.mock('./supabase', () => ({ supabase: { auth } }));
 vi.mock('./InstallApp',()=>({default:()=>null}));
 vi.mock('./Household', () => ({ default: () => null }));
-vi.mock('./AccountProfile',()=>({default:({onSignOut}:{onSignOut:()=>Promise<string|null>})=><button onClick={()=>void onSignOut()}>Cerrar sesión</button>}));
+vi.mock('./AccountProfile',()=>({default:({user,onSignOut}:{user:{user_metadata:{full_name?:string}};onSignOut:()=>Promise<string|null>})=><><span>Hola, {user.user_metadata.full_name||'Tu perfil'}</span><button onClick={()=>void onSignOut()}>Cerrar sesión</button></>}));
 import App from './App';
 beforeEach(() => {
   Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
@@ -29,7 +29,7 @@ describe('acceso', () => {
     auth.getSession.mockResolvedValue({ data: { session: { user: { user_metadata: { full_name: 'Ana' } } } }, error: null });
     auth.signOut.mockResolvedValue({ error: null });
     render(<App />);
-    expect(await screen.findByRole('heading', { name: 'Hola, Ana' })).toBeInTheDocument();
+    expect(await screen.findByText('Hola, Ana')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
     expect(await screen.findByRole('button', { name: /Continuar con Google/ })).toBeEnabled();
   });
@@ -39,7 +39,7 @@ describe('acceso', () => {
     render(<App />);
     fireEvent.click(await screen.findByRole('button', { name: 'Cerrar sesión' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('No se ha podido cerrar');
-    expect(screen.getByRole('heading', { name: 'Hola, Tu perfil' })).toBeInTheDocument();
+    expect(screen.getByText('Hola, Tu perfil')).toBeInTheDocument();
   });
   it('desactiva el acceso si se pierde conexión', async () => {
     render(<App />);

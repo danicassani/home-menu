@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { cachedHouse, rememberHouse, forgetPrivate, OfflineContext, OfflineWorkspace } from './offline';
 import OfflineStatus from './OfflineStatus';
 import { supabase } from './supabase';
@@ -10,7 +11,7 @@ import HouseholdSettings from './HouseholdSettings';
 import type { House } from './householdManagement';
 import { calendarDay, monday } from './menu';
 import { HouseholdUpdates, useHouseholdRealtime } from './realtime';
-export default function Household({userId,online}:{userId:string;online:boolean}) {
+export default function Household({userId,online,statusTarget}:{userId:string;online:boolean;statusTarget?:HTMLElement|null}) {
  const [workspace,setWorkspace]=useState<OfflineWorkspace|null>(null);
  const [validated,setValidated]=useState(false);
  const [tab,setTab]=useState<View>('recipes');
@@ -74,13 +75,14 @@ export default function Household({userId,online}:{userId:string;online:boolean}
   }catch{setError(kind==='accept'?'No se puede aceptar: comprueba que la invitación siga vigente y que no pertenezcas a otra casa.':'No se ha podido crear la casa.');}
   finally{setBusy(false);}
  }
- if(loading)return <p role="status">Cargando casa…</p>;
+ const connection=statusTarget?createPortal(<p className={realtime.status==='live'?'sync-status live':'sync-status'} role="status" aria-label={realtime.status==='live'?'Sincronización activa':'Estado de sincronización'}>{realtime.status==='live'?'Online':realtime.status==='offline'?'Sin conexión':realtime.status==='connecting'?'Conectando…':'Reconectando…'}</p>,statusTarget):null;
+ if(loading)return <>{connection}<p role="status">Cargando casa…</p></>;
  const canWrite=online&&validated;
  return <OfflineContext.Provider value={workspace&&!workspace.closed?workspace:null}><HouseholdUpdates.Provider value={realtime.revision}><section className="household" aria-label="Casa">
+  {connection}
   {(error||loadError)&&<p role="alert">{error||loadError} <button onClick={()=>setRetry(n=>n+1)}>Reintentar</button></p>}
   {workspace&&!workspace.closed&&<OfflineStatus workspace={workspace} online={canWrite}/>}
   {house?<>
-   <p className={realtime.status==='live'?'sync-status live':'sync-status'} role="status" aria-label={realtime.status==='live'?'Sincronización activa':'Estado de sincronización'}>{realtime.status==='live'?'En directo':realtime.status==='offline'?'Sin conexión':realtime.status==='connecting'?'Conectando…':'Reconectando…'}</p>
    {!house.deletion_requested_at&&!workspace?<p role="status">Cargando datos…</p>:house.deletion_requested_at||tab==='house'?<HouseholdSettings key={house.id} house={house} userId={userId} online={canWrite} onChanged={()=>setRetry(n=>n+1)}/>:tab==='recipes'?<RecipeBook key={house.id} houseId={house.id} online={canWrite}/>:tab==='week'?<WeeklyMenu key={house.id} houseId={house.id} online={canWrite} selectedWeek={week} onWeekChange={setWeek}/>:<ShoppingList key={house.id} houseId={house.id} week={week} onWeekChange={setWeek} online={canWrite}/>}
    {!house.deletion_requested_at&&<BottomNavigation view={tab} onChange={view=>{setTab(view);document.getElementById('contenido')?.scrollIntoView({block:'start'});}}/>}
   </>:token?<><h2>Unirte a una casa</h2><button disabled={busy||!online} onClick={()=>void action('accept')}>Aceptar invitación</button><button className="secondary" disabled={busy} onClick={()=>{sessionStorage.removeItem('home-menu-invitation');setToken('');}}>Descartar invitación</button></>:<form onSubmit={e=>{e.preventDefault();void action('create');}}><h2>Crear casa</h2><label>Nombre<input required maxLength={80} value={name} onChange={e=>setName(e.target.value)}/></label><button disabled={busy||!online||!name.trim()}>Crear casa</button></form>}

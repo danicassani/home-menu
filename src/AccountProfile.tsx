@@ -47,7 +47,7 @@ export default function AccountProfile({user,online,onSignOut}:{user:Pick<User,'
   finally{setLeaving(false);}
  }
  return <>
-  <button className="identity profile-trigger" aria-label={`Abrir perfil de ${name}`} onClick={()=>{dirty.current=false;setDraft(saved);setOpen(true);}}><span className="avatar" aria-hidden="true">{saved.avatar||Array.from(name)[0]?.toUpperCase()}</span><span>{name}</span></button>
+  <button className="identity profile-trigger" aria-label={`Abrir perfil de ${name}`} onClick={()=>{dirty.current=false;setDraft(saved);setOpen(true);}}><span className="avatar" aria-hidden="true">{saved.avatar||Array.from(name)[0]?.toUpperCase()}</span><span className="profile-greeting">Hola, {name}</span></button>
   <dialog ref={dialog} className="profile-dialog" aria-labelledby="profile-title" onCancel={e=>{e.preventDefault();close();}} onClose={()=>{if(!locked)setOpen(false);}}>
    <div className="section-heading"><h2 id="profile-title">Perfil</h2><button type="button" className="profile-close secondary" aria-label="Cerrar perfil" disabled={locked} onClick={close}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
    <p className="profile-name">{name}</p>

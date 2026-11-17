@@ -18,10 +18,14 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 
 - Interfaz estética y contenida: tipografía cuidada, tarjetas, color y espaciado; sin textos promocionales ni relleno. Único eslogan permitido: «Olvida el 'qué comemos'». Usa etiquetas y mensajes breves.
 
+- Presenta el contenido sobre el fondo, sin panel exterior ni separador bajo la cabecera. Conserva las tarjetas de platos y días. Las actualizaciones se avisan mediante diálogo con Actualizar app y Más tarde, esperando si otro diálogo está abierto; nunca recargues sin aceptar.
+
 - Navegación entre Carta, Semana, Compra y Casa en una barra inferior fija de cuatro iconos sin texto visible. Mantén etiquetas accesibles, foco, selección y espacio para que la barra no tape controles ni áreas seguras del móvil.
 
 - El cierre de sesión solo aparece dentro del perfil; la X del diálogo no cierra sesión. Conserva el acceso al perfil incluso cuando cargan o fallan sus preferencias.
 - Fotos: selector con icono de cámara y encuadre ajustable antes de subir. Cancelar conserva la foto anterior; nunca subas el original al confirmar el encuadre. Ingredientes: alternativa y borrador para quitar en la misma fila.
+
+- El saludo «Hola, nombre» se muestra pequeño junto al avatar del perfil, también en móvil. El estado de sincronización aparece bajo Home Menu: «Online» al estar suscrito, manteniendo los estados de conexión, reconexión y sin conexión. No hay separador entre cabecera y contenido.
 
 ## Implementación
 
