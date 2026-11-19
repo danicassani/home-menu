@@ -2,12 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useOffline } from './offline';
 import { readBook } from './offlineResources';
 import RecipeEditor from './RecipeEditor';
+import CatalogViewToggle from './CatalogViewToggle';
+import PublicCatalog from './PublicCatalog';
+import { publishRecipe } from './publicCatalog';
 import RecipeFilters from './RecipeFilters';
 import ArchivedRecipes from './ArchivedRecipes';
 import { useRealtimeRefresh } from './realtime';
 import { archiveRecipe, filterRecipes, recipeTags, type Ingredient, type Recipe } from './recipes';
 export default function RecipeBook({ houseId, online }: {houseId:string; online:boolean}) {
   const workspace=useOffline();
+  const [publicView,setPublicView]=useState(false);
   const [recipes,setRecipes]=useState<Recipe[]>([]);
   const [ingredients,setIngredients]=useState<Ingredient[]>([]);
   const [loading,setLoading]=useState(true);
@@ -56,8 +60,18 @@ export default function RecipeBook({ houseId, online }: {houseId:string; online:
     try{await archiveRecipe(archivedRecipe);setRecipes(list=>list.map(value=>value.id===archivedRecipe.id?{...value,archived:false,revision:value.revision+1}:value));setRetry(n=>n+1);}
     finally{setBusy(false);}
   }
+  async function publish(){
+    if(!recipe||busy||!online||recipe.catalog_imported)return;
+    if(!window.confirm('¿Publicar receta, foto, ingredientes y alternativas para todos los usuarios?'))return;
+    setBusy(true);setError('');try{await publishRecipe(recipe);setRetry(value=>value+1);}catch{setError('No se ha podido publicar. Recarga e inténtalo de nuevo.');}finally{setBusy(false);}
+  }
+  async function editPublic(id:string){
+    const data=await readBook(workspace,houseId,online);const original=data.recipes.find(recipe=>recipe.id===id);if(!original)throw new Error('Receta no disponible');
+    setIngredients(data.ingredients);setRecipes(data.recipes);setEditingRecipe(original);setPublicView(false);setEditing(true);
+  }
   const visible=filterRecipes(recipes,search,tags,false);
   if(editing)return <RecipeEditor key={editingRecipe?.id||'new'} original={editingRecipe} houseId={houseId} ingredients={ingredients} availableTags={recipeTags(recipes)} online={online} onCreated={i=>setIngredients(list=>[...list.filter(x=>x.id!==i.id),i].sort((a,b)=>a.name.localeCompare(b.name,'es')))} onCancel={()=>setEditing(false)} onSaved={()=>{setEditing(false);setSelected(null);setRetry(n=>n+1);}}/>;
+  if(publicView)return <PublicCatalog online={online} layout={layout} onLayoutChange={setLayout} onClose={()=>{setPublicView(false);setRetry(value=>value+1);}} onChanged={()=>setRetry(value=>value+1)} onEdit={editPublic}/>;
   return <section aria-label="Carta" className="recipe-book">
     {error&&<p role="alert">{error} <button className="secondary compact" onClick={()=>setRetry(n=>n+1)}>Reintentar</button></p>}
     {loading?<p role="status">Cargando carta…</p>:recipe?<>
@@ -69,13 +83,10 @@ export default function RecipeBook({ houseId, online }: {houseId:string; online:
         {recipe.description&&<p>{recipe.description}</p>}
         <h3>Ingredientes</h3><ul className="detail-ingredients">{recipe.lines.map(l=><li key={l.id}>{name(l.ingredient_id)}{l.alternatives.length>0&&<span className="alternatives-label">Alternativas: {l.alternatives.map(name).join(', ')}</span>}</li>)}</ul>
         <h3>Receta</h3><p className="instructions">{recipe.instructions}</p>
-        <div className="recipe-actions">{!recipe.archived&&<button disabled={!online||busy} onClick={()=>{setEditingRecipe(recipe);setEditing(true);}}>Editar plato</button>}<button className="secondary" disabled={!online||busy} onClick={()=>void archive()}>{recipe.archived?'Restaurar plato':'Archivar plato'}</button></div>
+        <div className="recipe-actions">{!recipe.archived&&!recipe.catalog_imported&&<button disabled={!online||busy} onClick={()=>{setEditingRecipe(recipe);setEditing(true);}}>Editar plato</button>}<button className="secondary" disabled={!online||busy} onClick={()=>void archive()}>{recipe.archived?'Restaurar plato':'Archivar plato'}</button>{!recipe.archived&&!recipe.catalog_imported&&!recipe.publication_id&&<button className="secondary" disabled={!online||busy} onClick={()=>void publish()}>Publicar</button>}{recipe.publication_id&&<button className="secondary" disabled={!online||busy} onClick={()=>setPublicView(true)}>Ver en carta pública</button>}</div>
       </article>
     </>:<>
-      <div className="section-heading catalog-heading"><div className="catalog-heading-start"><h2>Carta</h2><div className="catalog-view-toggle" role="group" aria-label="Vista de Carta">
-        <button type="button" aria-label="Modo lista" aria-pressed={layout==='list'} onClick={()=>setLayout('list')}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M9 5h12M9 12h12M9 19h12M3 5h1M3 12h1M3 19h1"/></svg></button>
-        <button type="button" aria-label="Modo cuadrícula" aria-pressed={layout==='grid'} onClick={()=>setLayout('grid')}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
-      </div></div><button disabled={!online||Boolean(error)} onClick={()=>{setSelected(null);setEditingRecipe(null);setEditing(true);}}>Nuevo plato</button></div>
+      <div className="section-heading catalog-heading"><div className="catalog-heading-start"><h2>Carta</h2><CatalogViewToggle layout={layout} onChange={setLayout}/></div><button disabled={!online||Boolean(error)} onClick={()=>{setSelected(null);setEditingRecipe(null);setEditing(true);}}>Nuevo plato</button></div>
       <RecipeFilters search={search} onSearch={setSearch} tags={recipeTags(recipes.filter(recipe=>!recipe.archived))} selected={tags} onSelect={setTags}/>
       {photoError&&<p role="status">Algunas fotos no se han podido cargar. <button className="secondary compact" onClick={()=>setRetry(n=>n+1)}>Reintentar fotos</button></p>}
       <div className="recipe-grid" data-layout={layout}>{visible.map(r=><button className="recipe-card" key={r.id} onClick={()=>setSelected(r.id)}>
@@ -83,7 +94,7 @@ export default function RecipeBook({ houseId, online }: {houseId:string; online:
         <div className="recipe-card-body"><h3>{r.name}</h3>{r.description&&<p>{r.description}</p>}</div>
       </button>)}</div>
       {!visible.length&&!error&&<p className="empty-state">{search||tags.length?'No hay platos con estos filtros.':'Aún no hay platos.'}</p>}
-      <div className="catalog-footer"><button type="button" className="archive-link" onClick={()=>setArchived(true)}>Ver archivados</button></div>
+      <div className="catalog-footer"><button type="button" className="archive-link" onClick={()=>setArchived(true)}>Ver archivados</button><button type="button" className="archive-link" disabled={!online} onClick={()=>{setSelected(null);setPublicView(true);}}>Carta pública</button></div>
       {archived&&<ArchivedRecipes recipes={recipes.filter(recipe=>recipe.archived)} online={online} onRestore={restore} onClose={()=>setArchived(false)}/>}
     </>}
   </section>;

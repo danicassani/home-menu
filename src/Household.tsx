@@ -5,6 +5,7 @@ import OfflineStatus from './OfflineStatus';
 import { supabase } from './supabase';
 import BottomNavigation, { type View } from './BottomNavigation';
 import RecipeBook from './RecipeBook';
+import PublicCatalog from './PublicCatalog';
 import WeeklyMenu from './WeeklyMenu';
 import ShoppingList from './ShoppingList';
 import HouseholdSettings from './HouseholdSettings';
@@ -14,6 +15,7 @@ import { HouseholdUpdates, useHouseholdRealtime } from './realtime';
 export default function Household({userId,online,statusTarget}:{userId:string;online:boolean;statusTarget?:HTMLElement|null}) {
  const [workspace,setWorkspace]=useState<OfflineWorkspace|null>(null);
  const [validated,setValidated]=useState(false);
+ const [browsePublic,setBrowsePublic]=useState(false),[publicLayout,setPublicLayout]=useState<'list'|'grid'>('grid');
  const [tab,setTab]=useState<View>('recipes');
  const [week,setWeek]=useState(()=>monday(calendarDay(new Date())));
  const [house,setHouse]=useState<House|null>(null);
@@ -77,6 +79,7 @@ export default function Household({userId,online,statusTarget}:{userId:string;on
  }
  const connection=statusTarget?createPortal(<p className={realtime.status==='live'?'sync-status live':'sync-status'} role="status" aria-label={realtime.status==='live'?'Sincronización activa':'Estado de sincronización'}>{realtime.status==='live'?'Online':realtime.status==='offline'?'Sin conexión':realtime.status==='connecting'?'Conectando…':'Reconectando…'}</p>,statusTarget):null;
  if(loading)return <>{connection}<p role="status">Cargando casa…</p></>;
+ if(browsePublic&&!house)return <>{connection}<PublicCatalog online={online} canIncorporate={false} layout={publicLayout} onLayoutChange={setPublicLayout} onClose={()=>setBrowsePublic(false)} onChanged={()=>{}} onEdit={async()=>{}}/></>;
  const canWrite=online&&validated;
  return <OfflineContext.Provider value={workspace&&!workspace.closed?workspace:null}><HouseholdUpdates.Provider value={realtime.revision}><section className="household" aria-label="Casa">
   {connection}
@@ -86,5 +89,6 @@ export default function Household({userId,online,statusTarget}:{userId:string;on
    {!house.deletion_requested_at&&!workspace?<p role="status">Cargando datos…</p>:house.deletion_requested_at||tab==='house'?<HouseholdSettings key={house.id} house={house} userId={userId} online={canWrite} onChanged={()=>setRetry(n=>n+1)}/>:tab==='recipes'?<RecipeBook key={house.id} houseId={house.id} online={canWrite}/>:tab==='week'?<WeeklyMenu key={house.id} houseId={house.id} online={canWrite} selectedWeek={week} onWeekChange={setWeek}/>:<ShoppingList key={house.id} houseId={house.id} week={week} onWeekChange={setWeek} online={canWrite}/>}
    {!house.deletion_requested_at&&<BottomNavigation view={tab} onChange={view=>{setTab(view);document.getElementById('contenido')?.scrollIntoView({block:'start'});}}/>}
   </>:token?<><h2>Unirte a una casa</h2><button disabled={busy||!online} onClick={()=>void action('accept')}>Aceptar invitación</button><button className="secondary" disabled={busy} onClick={()=>{sessionStorage.removeItem('home-menu-invitation');setToken('');}}>Descartar invitación</button></>:<form onSubmit={e=>{e.preventDefault();void action('create');}}><h2>Crear casa</h2><label>Nombre<input required maxLength={80} value={name} onChange={e=>setName(e.target.value)}/></label><button disabled={busy||!online||!name.trim()}>Crear casa</button></form>}
+ {!house&&<button type="button" className="archive-link" disabled={!online} onClick={()=>setBrowsePublic(true)}>Carta pública</button>}
  </section></HouseholdUpdates.Provider></OfflineContext.Provider>;
 }

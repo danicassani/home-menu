@@ -67,12 +67,12 @@ export default function RecipeEditor({ original, houseId, ingredients, available
         const problem=validatePhoto(selected);if(problem){setError(problem);return;}
         setError('');setCropSource(selected);
        }}/>
-       {(preview||(draft.photo_path&&original?.photoUrl))?<img className="editor-photo" src={preview||original?.photoUrl} alt="Foto del plato"/>:null}
+       {(preview||((draft.photo_path||(!draft.clearPhoto&&original?.catalog_photo_path))&&original?.photoUrl))?<img className="editor-photo" src={preview||original?.photoUrl} alt="Foto del plato"/>:null}
        <div className="photo-tools">
         <button type="button" className="photo-icon secondary" aria-label="Añadir o cambiar foto" onClick={()=>fileInput.current?.click()}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M8 5 9.5 3h5L16 5h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg></button>
-        {(file||draft.photo_path)&&<>
+        {(file||draft.photo_path||(!draft.clearPhoto&&original?.catalog_photo_path))&&<>
          {(localSource||original?.photoUrl)&&<button type="button" className="photo-icon secondary" aria-label="Ajustar encuadre" onClick={()=>setCropSource(localSource||original!.photoUrl!)}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v13a2 2 0 0 0 2 2h13M3 6h13a2 2 0 0 1 2 2v13"/></svg></button>}
-         <button type="button" className="photo-icon secondary" aria-label="Quitar foto" onClick={()=>{setFile(null);setLocalSource(null);upload.current=null;setDraft({...draft,photo_path:null});}}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></svg></button>
+         <button type="button" className="photo-icon secondary" aria-label="Quitar foto" onClick={()=>{setFile(null);setLocalSource(null);upload.current=null;setDraft({...draft,photo_path:null,clearPhoto:true});}}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></svg></button>
         </>}
        </div>
       </div>

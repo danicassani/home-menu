@@ -1,7 +1,9 @@
+import IngredientManager from './IngredientManager';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { applyAppearance, avatars, clearAppearance, defaultPreferences, loadPreferences, savePreferences, themes, type Preferences, type Theme } from './preferences';
 export default function AccountProfile({user,online,onSignOut}:{user:Pick<User,'id'|'user_metadata'>;online:boolean;onSignOut?:()=>Promise<string|null>}) {
+ const [managingIngredients,setManagingIngredients]=useState(false);
  const name=String(user.user_metadata.full_name||user.user_metadata.name||'Tu perfil');
  const [saved,setSaved]=useState(defaultPreferences),[draft,setDraft]=useState(defaultPreferences);
  const [open,setOpen]=useState(false),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false);
@@ -9,7 +11,7 @@ export default function AccountProfile({user,online,onSignOut}:{user:Pick<User,'
  const locked=busy||leaving;
  const [error,setError]=useState(''),[readError,setReadError]=useState(false),[retry,setRetry]=useState(0);
  const [systemDark,setSystemDark]=useState(()=>window.matchMedia('(prefers-color-scheme: dark)').matches);
- const dialog=useRef<HTMLDialogElement>(null),dirty=useRef(false);
+ const dialog=useRef<HTMLDialogElement>(null),profileTrigger=useRef<HTMLButtonElement>(null),dirty=useRef(false);
  useEffect(()=>{
   const media=window.matchMedia('(prefers-color-scheme: dark)');const changed=()=>setSystemDark(media.matches);
   media.addEventListener('change',changed);return()=>media.removeEventListener('change',changed);
@@ -47,7 +49,7 @@ export default function AccountProfile({user,online,onSignOut}:{user:Pick<User,'
   finally{setLeaving(false);}
  }
  return <>
-  <button className="identity profile-trigger" aria-label={`Abrir perfil de ${name}`} onClick={()=>{dirty.current=false;setDraft(saved);setOpen(true);}}><span className="avatar" aria-hidden="true">{saved.avatar||Array.from(name)[0]?.toUpperCase()}</span><span className="profile-greeting">Hola, {name}</span></button>
+  <button ref={profileTrigger} className="identity profile-trigger" aria-label={`Abrir perfil de ${name}`} onClick={()=>{dirty.current=false;setDraft(saved);setOpen(true);}}><span className="avatar" aria-hidden="true">{saved.avatar||Array.from(name)[0]?.toUpperCase()}</span><span className="profile-greeting">Hola, {name}</span></button>
   <dialog ref={dialog} className="profile-dialog" aria-labelledby="profile-title" onCancel={e=>{e.preventDefault();close();}} onClose={()=>{if(!locked)setOpen(false);}}>
    <div className="section-heading"><h2 id="profile-title">Perfil</h2><button type="button" className="profile-close secondary" aria-label="Cerrar perfil" disabled={locked} onClick={close}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
    <p className="profile-name">{name}</p>
@@ -66,7 +68,9 @@ export default function AccountProfile({user,online,onSignOut}:{user:Pick<User,'
     {!online&&<p role="status">Conéctate para cambiar el perfil.</p>}
     <div className="profile-actions"><button type="submit" disabled={loading||locked||readError||!online}>{busy?'Guardando…':'Guardar perfil'}</button><button type="button" className="secondary" disabled={locked} onClick={close}>Cancelar</button></div>
    </form>
+   <button type="button" className="secondary" disabled={locked||!online} onClick={()=>{dirty.current=false;setDraft(saved);setOpen(false);setManagingIngredients(true);}}>Ingredientes</button>
    {onSignOut&&<div className="profile-session"><button type="button" className="secondary danger-text" disabled={locked} onClick={()=>void signOut()}>{leaving?'Cerrando sesión…':'Cerrar sesión'}</button></div>}
   </dialog>
+  {managingIngredients&&<IngredientManager online={online} onClose={()=>{setManagingIngredients(false);profileTrigger.current?.focus();}}/>}
  </>;
 }

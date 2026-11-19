@@ -29,6 +29,14 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 
 - Carta: sin botón Actualizar; conservar actualización automática y reintentos ante errores. Ver archivados al pie abre un diálogo con Desarchivar. En las tarjetas, título y descripción sobre una transparencia negra al pie de la foto. Los filtros de etiquetas son una fila deslizable con selección múltiple (exigir todas), resaltado del tema y Limpiar filtros; compartirlos con el selector del menú.
 
+## Carta pública
+
+- Recetas públicas solo para usuarios con sesión. Publicar incluye foto, etiquetas, ingredientes y alternativas; solo la casa autora edita el contenido. Guardar sincroniza las incorporaciones activas sin cambiar IDs privados ni perder marcas válidas.
+- Quitar de la carta archiva la incorporación de esa casa. Despublicar o eliminar la casa autora conserva copias privadas editables con sus fotos y menús. La banda diagonal «Ya la tienes» indica incorporación activa y no bloquea abrir la ficha.
+- Perfil permite editar ingredientes de la casa; solo administradores editan los públicos. Reutilizar ingredientes privados no sobrescribe sus valores; personalizar un ingrediente importado lo desvincula de correcciones globales. No añadir borrado/fusión en esta entrega.
+- Fotos públicas en bucket privado catalog-photos; JWT validado explícitamente en catalog-publication. Nunca exponer service_role al cliente. La limpieza reclama huérfanos antes de Storage API; no permitir publicar un archivo reclamado.
+- La asignación inicial de administrador es manual en SQL Editor; las migraciones no incluyen usuarios reales ni asignan privilegios automáticamente.
+
 ## Implementación
 
 - El día actual se resalta con el color del tema y `aria-current="date"`, según la fecha local; se actualiza al cambiar de día y no se marca en otras semanas. En Semana, el botón + aparece solo en turnos vacíos; los ocupados muestran «Comida: nombre del plato» o «Cena: nombre del plato» sobre la foto, sin cabecera de turno duplicada. Al quitar el último plato reaparece el +. Se conservan las apariciones múltiples ya existentes. Semana muestra tarjetas con foto panorámica de menor altura y título sobre una transparencia negra al pie. Sustituir (flechas circulares) y Quitar (papelera) son iconos en la esquina superior derecha. Los ingredientes no aparecen en la tarjeta: pulsar la foto o el título abre un diálogo con las alternativas de esa aparición; mantiene los bloqueos offline y los avisos si la receta cambia.
