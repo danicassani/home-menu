@@ -223,3 +223,10 @@ Las fotos se copian a un bucket **privado** antes de confirmar una publicación.
 La acción `cleanup` de la misma Edge Function elimina archivos huérfanos con más de 24 horas mediante Storage API y por lotes. Puede invocarla un administrador autenticado o un trabajo de servidor con la credencial administrativa; programa su ejecución diaria en tu infraestructura de Supabase si quieres limpieza automática. Los archivos se reclaman bajo bloqueo antes de borrarse y no se pueden publicar mientras se limpian. Los fallos permiten reintentar; nunca se borran filas de `storage.objects` por SQL. Las fotos referenciadas por publicaciones o copias privadas se conservan.
 
 Comprobaciones: `npm test`, `npm run build`, `npm run test:e2e` y `npm run test:pwa`. La Edge Function también se verifica con `deno check --no-lock --config supabase/functions/catalog-publication/deno.json supabase/functions/catalog-publication/index.ts`. Las pruebas de PostgreSQL son locales (PGlite), las de Storage/Edge y navegador usan servicios simulados. Queda validar el despliegue real, permisos de Storage y dispositivos físicos. No se ha aplicado la migración, asignado administradores ni desplegado la función automáticamente.
+
+
+### Desplegar la función desde la web de Supabase
+
+En Edge Functions crea o edita **catalog-publication** y pega en `index.ts` el contenido completo de `supabase/functions/catalog-publication/dashboard.ts`. Este archivo incluye el manejador y no requiere añadir archivos auxiliares. Despliega y desactiva **Verify JWT with legacy secret** en la configuración de la función: la identidad ya se valida dentro mediante Auth.getUser. No pegues únicamente el pequeño index.ts de la versión CLI, que importa handler.ts, ni mantengas el ejemplo Hello World.
+
+La publicación solo se confirma tras recibir un identificador válido y comprobar que la receta existe en el catálogo público. Los errores permanecen visibles aunque llegue una actualización Realtime. El archivo para Dashboard se regenera con `node scripts/build-publication-dashboard.mjs`; CI comprueba que coincide con el manejador.

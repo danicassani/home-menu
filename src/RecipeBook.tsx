@@ -16,6 +16,7 @@ export default function RecipeBook({ houseId, online }: {houseId:string; online:
   const [ingredients,setIngredients]=useState<Ingredient[]>([]);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
+  const [publicationError,setPublicationError]=useState(''),[publicationSuccess,setPublicationSuccess]=useState(false);
   const [photoError,setPhotoError]=useState(false);
   const [search,setSearch]=useState('');
   const [layout,setLayout]=useState<'list'|'grid'>(()=>{try{return localStorage.getItem('home-menu-catalog-layout')==='grid'?'grid':'list';}catch{return 'list';}});
@@ -63,7 +64,7 @@ export default function RecipeBook({ houseId, online }: {houseId:string; online:
   async function publish(){
     if(!recipe||busy||!online||recipe.catalog_imported)return;
     if(!window.confirm('¿Publicar receta, foto, ingredientes y alternativas para todos los usuarios?'))return;
-    setBusy(true);setError('');try{await publishRecipe(recipe);setRetry(value=>value+1);}catch{setError('No se ha podido publicar. Recarga e inténtalo de nuevo.');}finally{setBusy(false);}
+    setBusy(true);setPublicationError('');setPublicationSuccess(false);try{const id=await publishRecipe(recipe);setRecipes(list=>list.map(item=>item.id===recipe.id?{...item,publication_id:id}:item));setPublicationSuccess(true);setRetry(value=>value+1);}catch(error){setPublicationError(error instanceof Error?error.message:'No se ha podido publicar.');}finally{setBusy(false);}
   }
   async function editPublic(id:string){
     const data=await readBook(workspace,houseId,online);const original=data.recipes.find(recipe=>recipe.id===id);if(!original)throw new Error('Receta no disponible');
@@ -73,9 +74,11 @@ export default function RecipeBook({ houseId, online }: {houseId:string; online:
   if(editing)return <RecipeEditor key={editingRecipe?.id||'new'} original={editingRecipe} houseId={houseId} ingredients={ingredients} availableTags={recipeTags(recipes)} online={online} onCreated={i=>setIngredients(list=>[...list.filter(x=>x.id!==i.id),i].sort((a,b)=>a.name.localeCompare(b.name,'es')))} onCancel={()=>setEditing(false)} onSaved={()=>{setEditing(false);setSelected(null);setRetry(n=>n+1);}}/>;
   if(publicView)return <PublicCatalog online={online} layout={layout} onLayoutChange={setLayout} onClose={()=>{setPublicView(false);setRetry(value=>value+1);}} onChanged={()=>setRetry(value=>value+1)} onEdit={editPublic}/>;
   return <section aria-label="Carta" className="recipe-book">
+    {publicationError&&<p role="alert">{publicationError}</p>}
+    {publicationSuccess&&<p role="status">Receta publicada.</p>}
     {error&&<p role="alert">{error} <button className="secondary compact" onClick={()=>setRetry(n=>n+1)}>Reintentar</button></p>}
     {loading?<p role="status">Cargando carta…</p>:recipe?<>
-      <button className="secondary" onClick={()=>{setSelected(null);setError('');}}>Volver a carta</button>
+      <button className="secondary" onClick={()=>{setSelected(null);setError('');setPublicationError('');setPublicationSuccess(false);}}>Volver a carta</button>
       <article className="recipe-detail">
         {recipe.photoUrl&&<img className="detail-photo" src={recipe.photoUrl} alt={recipe.name}/>}
         <h2>{recipe.name}</h2>
@@ -83,13 +86,13 @@ export default function RecipeBook({ houseId, online }: {houseId:string; online:
         {recipe.description&&<p>{recipe.description}</p>}
         <h3>Ingredientes</h3><ul className="detail-ingredients">{recipe.lines.map(l=><li key={l.id}>{name(l.ingredient_id)}{l.alternatives.length>0&&<span className="alternatives-label">Alternativas: {l.alternatives.map(name).join(', ')}</span>}</li>)}</ul>
         <h3>Receta</h3><p className="instructions">{recipe.instructions}</p>
-        <div className="recipe-actions">{!recipe.archived&&!recipe.catalog_imported&&<button disabled={!online||busy} onClick={()=>{setEditingRecipe(recipe);setEditing(true);}}>Editar plato</button>}<button className="secondary" disabled={!online||busy} onClick={()=>void archive()}>{recipe.archived?'Restaurar plato':'Archivar plato'}</button>{!recipe.archived&&!recipe.catalog_imported&&!recipe.publication_id&&<button className="secondary" disabled={!online||busy} onClick={()=>void publish()}>Publicar</button>}{recipe.publication_id&&<button className="secondary" disabled={!online||busy} onClick={()=>setPublicView(true)}>Ver en carta pública</button>}</div>
+        <div className="recipe-actions">{!recipe.archived&&!recipe.catalog_imported&&<button disabled={!online||busy} onClick={()=>{setEditingRecipe(recipe);setEditing(true);}}>Editar plato</button>}<button className="secondary" disabled={!online||busy} onClick={()=>void archive()}>{recipe.archived?'Restaurar plato':'Archivar plato'}</button>{!recipe.archived&&!recipe.catalog_imported&&!recipe.publication_id&&<button className="secondary" disabled={!online||busy} onClick={()=>void publish()}>{busy?'Publicando…':'Publicar'}</button>}{recipe.publication_id&&<button className="secondary" disabled={!online||busy} onClick={()=>setPublicView(true)}>Ver en carta pública</button>}</div>
       </article>
     </>:<>
       <div className="section-heading catalog-heading"><div className="catalog-heading-start"><h2>Carta</h2><CatalogViewToggle layout={layout} onChange={setLayout}/></div><button disabled={!online||Boolean(error)} onClick={()=>{setSelected(null);setEditingRecipe(null);setEditing(true);}}>Nuevo plato</button></div>
       <RecipeFilters search={search} onSearch={setSearch} tags={recipeTags(recipes.filter(recipe=>!recipe.archived))} selected={tags} onSelect={setTags}/>
       {photoError&&<p role="status">Algunas fotos no se han podido cargar. <button className="secondary compact" onClick={()=>setRetry(n=>n+1)}>Reintentar fotos</button></p>}
-      <div className="recipe-grid" data-layout={layout}>{visible.map(r=><button className="recipe-card" key={r.id} onClick={()=>setSelected(r.id)}>
+      <div className="recipe-grid" data-layout={layout}>{visible.map(r=><button className="recipe-card" key={r.id} onClick={()=>{setSelected(r.id);setPublicationError('');setPublicationSuccess(false);}}>
         {r.photoUrl?<img src={r.photoUrl} alt="" loading="lazy"/>:<div className="recipe-photo-empty" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="24" cy="24" r="15"/><circle cx="24" cy="24" r="10"/></svg></div>}
         <div className="recipe-card-body"><h3>{r.name}</h3>{r.description&&<p>{r.description}</p>}</div>
       </button>)}</div>

@@ -3,6 +3,8 @@ import { beforeEach, expect, it, vi } from 'vitest';
 const api=vi.hoisted(()=>({loadRecipeBook:vi.fn(),saveRecipe:vi.fn(),archiveRecipe:vi.fn(),addIngredient:vi.fn(),uploadPhoto:vi.fn()}));
 vi.mock('./recipes',async importOriginal=>({...await importOriginal<typeof import('./recipes')>(),...api}));
 import { OfflineContext, OfflineWorkspace } from './offline';
+vi.mock('./publicCatalog',()=>({publishRecipe:vi.fn()}));
+import { publishRecipe } from './publicCatalog';
 import RecipeBook from './RecipeBook';
 import { HouseholdUpdates } from './realtime';
 import type { Recipe } from './recipes';
@@ -135,4 +137,13 @@ it('combina varias etiquetas, limpia su selección y se actualiza sin botón Act
  api.loadRecipeBook.mockResolvedValue({recipes:[other],ingredients,photoError:false});
  rerender(<HouseholdUpdates.Provider value={1}><RecipeBook houseId="house" online/></HouseholdUpdates.Provider>);
  await waitFor(()=>expect(screen.queryByRole('button',{name:/^Pollo al horno/})).not.toBeInTheDocument());
+});
+
+it('mantiene visible un error de publicación tras una recarga Realtime',async()=>{
+ vi.spyOn(window,'confirm').mockReturnValue(true);vi.mocked(publishRecipe).mockRejectedValueOnce(new Error('La función ha rechazado la sesión.'));
+ const {rerender}=render(<HouseholdUpdates.Provider value={0}><RecipeBook houseId="house" online/></HouseholdUpdates.Provider>);
+ fireEvent.click(await screen.findByRole('button',{name:/Pollo al horno/}));fireEvent.click(screen.getByRole('button',{name:'Publicar'}));
+ expect(await screen.findByRole('alert')).toHaveTextContent('La función ha rechazado la sesión.');
+ rerender(<HouseholdUpdates.Provider value={1}><RecipeBook houseId="house" online/></HouseholdUpdates.Provider>);
+ await waitFor(()=>expect(api.loadRecipeBook).toHaveBeenCalledTimes(2));expect(screen.getByRole('alert')).toHaveTextContent('La función ha rechazado la sesión.');
 });

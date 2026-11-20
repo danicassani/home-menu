@@ -17,8 +17,9 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: deno check --no-lock --config supabase/functions/catalog-publication/deno.json supabase/functions/catalog-publication/index.ts
+      - run: deno check --no-lock --config supabase/functions/catalog-publication/deno.json supabase/functions/catalog-publication/index.ts supabase/functions/catalog-publication/dashboard.ts
       - run: npm ci
+      - run: node scripts/build-publication-dashboard.mjs --check
       - run: npm test
       - run: npm run build
       - run: npx playwright install --with-deps chromium

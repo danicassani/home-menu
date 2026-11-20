@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { publicationRequest } from './publicationRequest';
 export type Ingredient = { id: string; name: string; kcal_per_100g: number | null; revision?:number };
 export type Line = { id: string; ingredient_id: string; alternatives: string[] };
 export type Recipe = { id: string; name: string; description: string; instructions: string; tags: string[]; photo_path: string | null; archived: boolean; revision: number; lines: Line[]; publication_id?:string|null; catalog_imported?:boolean; catalog_photo_path?:string|null; photoUrl?: string };
@@ -61,7 +62,12 @@ export async function uploadPhoto(houseId: string, file: File) {
   return path;
 }
 export async function saveRecipe(original: Recipe | null, draft: Draft) {
-  if(original?.publication_id&&!original.catalog_imported){const result=await client().functions.invoke('catalog-publication',{body:{action:'save',recipe:original.id,revision:original.revision,draft}});if(result.error||result.data?.error)throw new Error(result.data?.error||'No se ha podido publicar');return;}
+  if(original?.publication_id&&!original.catalog_imported){
+    const payload=await publicationRequest({action:'save',recipe:original.id,revision:original.revision,draft});
+    const saved=Array.isArray(payload)&&payload.length===1?payload[0]:payload;
+    if(!saved||typeof saved!=='object'||!('id' in saved)||saved.id!==original.id||!('revision' in saved)||typeof saved.revision!=='number'||saved.revision<=original.revision)throw new Error('La función no ha confirmado el guardado. Revisa su despliegue.');
+    return;
+  }
   const result=await client().rpc('save_recipe',{ p_id:original?.id || null, p_revision:original?.revision || null, p_name:draft.name, p_description:draft.description, p_instructions:draft.instructions, p_tags:draft.tags, p_photo_path:draft.photo_path, p_lines:draft.lines,p_clear_photo:Boolean(draft.clearPhoto) });
   if(result.error) throw result.error;
 }
