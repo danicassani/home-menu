@@ -36,7 +36,10 @@ export function createPublicationHandler(factory:typeof createClient,env:{url:st
   const result=input.action==='publish'?await client.rpc('publish_recipe',{p_recipe:source.data.id,p_revision:input.revision}):await client.rpc('save_recipe',{
    p_id:source.data.id,p_revision:input.revision,p_name:draft.name,p_description:draft.description,p_instructions:draft.instructions,p_tags:draft.tags,p_photo_path:draft.photo_path,p_lines:draft.lines,p_clear_photo:Boolean(draft.clearPhoto)
   });
-  if(result.error)return reply(409,{error:'El plato ha cambiado o no se ha podido publicar. Recarga e inténtalo de nuevo.'});
+  if(result.error){
+   const error=result.error.code==='PGRST202'?'Falta la migración del catálogo público o la API aún no la ha recargado.':result.error.code==='42501'?'Faltan permisos de la migración del catálogo público.':result.error.message.includes('Prepara la foto')?'No se ha preparado la foto para publicar. Reintenta la publicación.':'El plato ha cambiado o no se ha podido publicar. Recarga e inténtalo de nuevo.';
+   return reply(409,{error,code:result.error.code});
+  }
   return reply(200,{data:result.data});
  }catch{return reply(400,{error:'No se ha podido preparar la publicación. Inténtalo de nuevo.'});}
 };}

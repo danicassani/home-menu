@@ -37,6 +37,8 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 - Fotos públicas en bucket privado catalog-photos; JWT validado explícitamente en catalog-publication. Nunca exponer service_role al cliente. La limpieza reclama huérfanos antes de Storage API; no permitir publicar un archivo reclamado.
 - La asignación inicial de administrador es manual en SQL Editor; las migraciones no incluyen usuarios reales ni asignan privilegios automáticamente.
 
+- Una respuesta HTTP 200 no confirma una publicación: validar el UUID devuelto y comprobar su receta/casa en el catálogo. Los errores de publicación deben sobrevivir a recargas Realtime; el éxito debe mostrarse explícitamente. Mantener dashboard.ts generado desde handler.ts y comprobarlo en CI.
+
 ## Implementación
 
 - El día actual se resalta con el color del tema y `aria-current="date"`, según la fecha local; se actualiza al cambiar de día y no se marca en otras semanas. En Semana, el botón + aparece solo en turnos vacíos; los ocupados muestran «Comida: nombre del plato» o «Cena: nombre del plato» sobre la foto, sin cabecera de turno duplicada. Al quitar el último plato reaparece el +. Se conservan las apariciones múltiples ya existentes. Semana muestra tarjetas con foto panorámica de menor altura y título sobre una transparencia negra al pie. Sustituir (flechas circulares) y Quitar (papelera) son iconos en la esquina superior derecha. Los ingredientes no aparecen en la tarjeta: pulsar la foto o el título abre un diálogo con las alternativas de esa aparición; mantiene los bloqueos offline y los avisos si la receta cambia.

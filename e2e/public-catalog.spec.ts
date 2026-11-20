@@ -29,7 +29,7 @@ async function fixture(page:Page,admin=false){
    const source=state.recipes.find(recipe=>recipe.id===data.recipe)!;
    if(data.action==='save'){Object.assign(source,{name:data.draft.name,description:data.draft.description,instructions:data.draft.instructions,tags:data.draft.tags,revision:source.revision+1});Object.assign(publicRecipes.find(recipe=>recipe.id===(source as any).publication_id),{...data.draft,revision:source.revision});}
    else {const pub={...source,id:crypto.randomUUID(),owned:true,lines:[]};publicRecipes.push(pub);Object.assign(source,{publication_id:pub.id,catalog_imported:false,revision:source.revision+1});}
-   body={data:'ok'};notify();
+   body={data:data.action==='save'?source:(source as any).publication_id};notify();
   }else if(name==='unpublish_recipe'){
    const index=publicRecipes.findIndex(recipe=>recipe.id===data.p_public);publicRecipes.splice(index,1);state.recipes.forEach((recipe:any)=>{if(recipe.publication_id===data.p_public){recipe.publication_id=null;recipe.catalog_imported=false;}});body=null;notify();
   }else {await route.fallback();return;}
@@ -51,7 +51,7 @@ test('incorpora, muestra Ya la tienes y quita únicamente de la carta de la casa
 });
 test('publica, guarda cambios publicados y permite dejar de publicar',async({page})=>{
  await fixture(page);page.on('dialog',dialog=>dialog.accept());await page.locator('.recipe-card').filter({hasText:'Pollo al horno'}).click();await page.getByRole('button',{name:'Publicar',exact:true}).click();
- await expect(page.getByRole('button',{name:'Ver en carta pública',exact:true})).toBeVisible();await page.getByRole('button',{name:'Editar plato',exact:true}).click();await page.getByLabel('Nombre del plato').fill('Pollo compartido');await page.getByRole('button',{name:'Guardar plato',exact:true}).click();
+ await expect(page.getByText('Receta publicada.',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Ver en carta pública',exact:true})).toBeVisible();await page.getByRole('button',{name:'Editar plato',exact:true}).click();await page.getByLabel('Nombre del plato').fill('Pollo compartido');await page.getByRole('button',{name:'Guardar plato',exact:true}).click();
  await page.getByRole('button',{name:'Carta pública',exact:true}).click();await page.getByRole('button',{name:/Pollo compartido/}).click();await expect(page.getByRole('button',{name:'Editar receta',exact:true})).toBeVisible();await page.getByRole('button',{name:'Dejar de publicar',exact:true}).click();
  await expect(page.getByRole('button',{name:/Pollo compartido/})).toHaveCount(0);await page.getByRole('button',{name:'Volver a mi carta',exact:true}).click();await expect(page.locator('.recipe-card').filter({hasText:'Pollo compartido'})).toBeVisible();
 });
@@ -69,4 +69,11 @@ test('el administrador puede revisar y editar los ingredientes públicos',async(
 test('permite consultar la carta pública sin casa, pero exige una casa para incorporar',async({page})=>{
  const {state}=await fixture(page);state.members.length=0;for(const notify of state.userNotifiers)notify();
  await expect(page.getByRole('heading',{name:'Crear casa',exact:true})).toBeVisible();await page.getByRole('button',{name:'Carta pública',exact:true}).click();await page.getByRole('button',{name:/Ensalada pública/}).click();await expect(page.getByText('Cortar y servir.')).toBeVisible();await expect(page.getByRole('button',{name:'Añadir a mi carta',exact:true})).toBeDisabled();
+});
+
+test('no oculta un fallo de publicación tras una actualización automática',async({page})=>{
+ const {state}=await fixture(page);await page.route('https://fixture.supabase.co/functions/v1/catalog-publication',route=>route.fulfill({json:{message:'Hello World'}}));
+ page.on('dialog',dialog=>dialog.accept());await page.locator('.recipe-card').filter({hasText:'Pollo al horno'}).click();await page.getByRole('button',{name:'Publicar',exact:true}).click();
+ await expect(page.getByRole('alert')).toContainText('respuesta inesperada');for(const notify of state.notifiers)notify();
+ await expect(page.getByRole('button',{name:'Publicar',exact:true})).toBeEnabled();await expect(page.getByRole('alert')).toContainText('respuesta inesperada');await expect(page.getByText('Receta publicada.',{exact:true})).toHaveCount(0);
 });
