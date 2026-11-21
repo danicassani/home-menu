@@ -397,3 +397,9 @@ button.dialog-close { display: grid; place-items: center; width: 44px; height: 4
 .ingredient-management-list li > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .ingredient-management-list small { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; }
 .ingredient-management-list button { margin: 0; flex-shrink: 0; }
+
+.recipe-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.recipe-actions > button { margin: 0; }
+button.recipe-action-icon { display: grid; place-items: center; width: 46px; min-height: 46px; padding: 10px; color: var(--accent); background: var(--surface); border: 1px solid var(--border); }
+button.recipe-action-icon:hover:not(:disabled) { background: var(--soft); }
+.recipe-action-icon svg { width: 23px; height: 23px; }

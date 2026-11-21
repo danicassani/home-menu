@@ -20,6 +20,7 @@ test('crea, consulta y edita un plato con alternativas e ingrediente nuevo',asyn
  await page.getByRole('button',{name:'Guardar plato'}).click();
  await page.getByRole('button',{name:/Arroz de casa/}).click();
  await expect(page.getByText('Alternativas: Tofu')).toBeVisible();
+ await page.screenshot({path:testInfo.outputPath('acciones-plato.png')});
  await expect(page.getByText('Cocer y servir.')).toBeVisible();
  await page.getByRole('button',{name:'Editar plato'}).click();
  await page.getByLabel('Nombre del plato').fill('Arroz editado');
