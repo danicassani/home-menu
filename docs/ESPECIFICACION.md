@@ -24,6 +24,8 @@ El saludo «Hola, nombre» se muestra pequeño junto al avatar del perfil, tambi
 
 ### Carta de platos
 
+En la ficha privada, Editar plato, Archivar y Publicar son iconos de lápiz, caja y flecha saliendo de una bandeja, del color del tema. Conservan nombres accesibles, títulos al pasar el cursor y bloqueos durante las operaciones o sin conexión.
+
 Carta ofrece dos iconos del color del tema para elegir lista (un plato por fila) o cuadrícula (dos por fila, también en móvil). La selección se conserva en este navegador, sin datos personales. La cabecera y el espacio superior del contenido son compactos.
 
 Las etiquetas se normalizan a NFC con espacios compactados, sin duplicados por mayúsculas. Se admiten 0–20 etiquetas de 1–40 caracteres Unicode por receta. El editor ofrece etiquetas de la casa como sugerencias, permite añadirlas con Enter/+ y quitar chips, y recoge una etiqueta escrita pendiente al guardar.

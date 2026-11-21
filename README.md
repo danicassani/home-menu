@@ -3,6 +3,8 @@ PWA instalable en Android y iPhone para crear una carta de platos caseros, plani
 
 ## Carta de platos
 
+En la ficha privada, Editar plato, Archivar y Publicar son iconos de lápiz, caja y flecha saliendo de una bandeja, del color del tema. Conservan nombres accesibles, títulos al pasar el cursor y bloqueos durante las operaciones o sin conexión.
+
 Carta ofrece dos iconos del color del tema para elegir lista (un plato por fila) o cuadrícula (dos por fila, también en móvil). La selección se conserva en este navegador, sin datos personales. La cabecera y el espacio superior del contenido son compactos.
 
 Los usuarios podrán crear platos a mano y organizarlos con **etiquetas libres y opcionales**. La carta mostrará los platos como tarjetas con nombre, foto y una descripción breve. Al pulsar una tarjeta, se abrirá la ficha del plato con la **foto, la descripción, los ingredientes y la receta**, en ese orden.

@@ -16,6 +16,8 @@ Existen acceso Google, casas, invitaciones y carta de platos con ingredientes, a
 
 ## Diseño
 
+- En la ficha privada, Editar plato, Archivar y Publicar son iconos de lápiz, caja y flecha saliendo de una bandeja, del color del tema. Conservan nombres accesibles, títulos al pasar el cursor y bloqueos durante las operaciones o sin conexión.
+
 - Interfaz estética y contenida: tipografía cuidada, tarjetas, color y espaciado; sin textos promocionales ni relleno. Único eslogan permitido: «Olvida el 'qué comemos'». Usa etiquetas y mensajes breves.
 
 - Presenta el contenido sobre el fondo, sin panel exterior ni separador bajo la cabecera. Conserva las tarjetas de platos y días. Las actualizaciones se avisan mediante diálogo con Actualizar app y Más tarde, esperando si otro diálogo está abierto; nunca recargues sin aceptar.
