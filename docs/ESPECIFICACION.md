@@ -24,6 +24,8 @@ El saludo «Hola, nombre» se muestra pequeño junto al avatar del perfil, tambi
 
 ### Carta de platos
 
+El editor muestra sugerencias propias de etiquetas al enfocar Nueva etiqueta, también con el campo vacío. Filtra sin distinguir acentos/mayúsculas, excluye las ya seleccionadas y permite clic o flechas/Enter; Escape cierra la lista. Se mantiene la creación de etiquetas libres y el guardado del texto pendiente.
+
 En la ficha privada, Editar plato, Archivar y Publicar son iconos de lápiz, caja y flecha saliendo de una bandeja, del color del tema. Conservan nombres accesibles, títulos al pasar el cursor y bloqueos durante las operaciones o sin conexión.
 
 Carta ofrece dos iconos del color del tema para elegir lista (un plato por fila) o cuadrícula (dos por fila, también en móvil). La selección se conserva en este navegador, sin datos personales. La cabecera y el espacio superior del contenido son compactos.

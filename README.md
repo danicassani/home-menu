@@ -195,6 +195,8 @@ La carta se actualiza automáticamente con Realtime, al recuperar la conexión y
 
 ## Etiquetas y retirada de desayunos
 
+El editor muestra sugerencias propias de etiquetas al enfocar Nueva etiqueta, también con el campo vacío. Filtra sin distinguir acentos/mayúsculas, excluye las ya seleccionadas y permite clic o flechas/Enter; Escape cierra la lista. Se mantiene la creación de etiquetas libres y el guardado del texto pendiente.
+
 Las recetas admiten etiquetas libres opcionales, sin categorías fijas de comida o cena. Escríbelas en Nueva etiqueta y confirma con Enter o +; Guardar plato también recoge el texto pendiente. Se sugieren etiquetas de la casa y se pueden quitar individualmente. Se normalizan los espacios y Unicode, se deduplican sin distinguir mayúsculas y se admiten hasta 20 etiquetas de 40 caracteres por receta. Las recetas sin etiquetas siguen siendo válidas.
 
 La carta y el selector de platos del menú buscan por nombre y etiquetas, sin distinguir mayúsculas ni acentos; también permiten seleccionar varias etiquetas en una fila de texto deslizable. Los resultados deben tener todas las etiquetas seleccionadas. La selección se ilumina con el color del tema y «Limpiar filtros» la desactiva sin borrar la búsqueda. Las etiquetas no restringen los turnos de planificación: cualquier receta puede colocarse en comida o cena. No hay opción de añadir desayunos, ni en la interfaz ni en PostgreSQL.
