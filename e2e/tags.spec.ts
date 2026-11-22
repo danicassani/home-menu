@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { setupApp, currentWeek } from './fixtures';
+import { setupApp, currentWeek, createFixtureState } from './fixtures';
 test('añade etiquetas libres, las busca, las edita y usa cualquier receta en comida o cena',async({page},testInfo)=>{
  await setupApp(page);await page.getByRole('button',{name:'Nuevo plato',exact:true}).click();
  await expect(page.getByRole('checkbox',{name:'Desayuno',exact:true})).toHaveCount(0);await expect(page.getByRole('checkbox',{name:'Comida',exact:true})).toHaveCount(0);await expect(page.getByRole('checkbox',{name:'Cena',exact:true})).toHaveCount(0);
@@ -32,4 +32,19 @@ test('conserva búsqueda por etiquetas y solo dos turnos sin conexión',async({p
  await page.getByRole('searchbox',{name:'Buscar plato',exact:true}).fill('horno');await expect(page.getByRole('button',{name:/Pollo al horno/})).toBeVisible();
  await page.getByRole('button',{name:'Semana',exact:true}).click();await expect(page.getByRole('heading',{name:'Desayuno',exact:true})).toHaveCount(0);
  await expect(page.getByRole('button',{name:`Añadir comida del ${currentWeek()}`,exact:true})).toBeDisabled();
+});
+
+test('muestra etiquetas existentes al enfocar y permite elegir con clic o teclado',async({page},testInfo)=>{
+ const state=createFixtureState();state.recipes[0].tags=['Al horno','Rápido','Vegetariano'];await setupApp(page,state);
+ await page.getByRole('button',{name:'Nuevo plato',exact:true}).click();const input=page.getByRole('combobox',{name:'Nueva etiqueta',exact:true});
+ await input.click();const list=page.getByRole('listbox',{name:'Etiquetas existentes',exact:true});await expect(list.getByRole('option')).toHaveCount(3);
+ await input.fill('rapido');await expect(list.getByRole('option')).toHaveCount(1);await expect(list.getByRole('option',{name:'Rápido',exact:true})).toBeVisible();
+ await input.press('ArrowDown');await input.press('Enter');await expect(page.getByRole('button',{name:'Quitar etiqueta Rápido',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Nuevo plato',exact:true})).toBeVisible();
+ await input.click();await list.getByRole('option',{name:'Al horno',exact:true}).click();await expect(page.getByRole('button',{name:'Quitar etiqueta Al horno',exact:true})).toBeVisible();
+ await input.click();await expect(list.getByRole('option',{name:'Rápido',exact:true})).toHaveCount(0);await expect(list.getByRole('option')).toHaveCount(1);
+ await page.screenshot({path:testInfo.outputPath('sugerencias-etiquetas.png'),fullPage:true});await input.press('Escape');await expect(list).not.toBeVisible();
+ await input.fill('Casero');await input.press('Enter');await expect(page.getByRole('button',{name:'Quitar etiqueta Casero',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Quitar etiqueta Al horno',exact:true}).click();await input.click();await list.getByRole('option',{name:'Al horno',exact:true}).click();
+ await page.getByLabel('Nombre del plato').fill('Plato con etiquetas');await page.getByLabel('Receta',{exact:true}).fill('Cocinar.');await page.getByRole('button',{name:'Añadir ingrediente',exact:true}).click();await page.getByRole('button',{name:'Pollo',exact:true}).click();await page.getByRole('button',{name:'Guardar plato',exact:true}).click();
+ await page.getByRole('button',{name:/^Plato con etiquetas/}).click();await page.getByRole('button',{name:'Editar plato',exact:true}).click();for(const tag of ['Rápido','Al horno','Casero'])await expect(page.getByRole('button',{name:'Quitar etiqueta '+tag,exact:true})).toBeVisible();
 });

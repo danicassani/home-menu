@@ -9,6 +9,11 @@ export default function RecipeEditor({ original, houseId, ingredients, available
   const [draft,setDraft]=useState<Draft>(()=>original?{...original,lines:original.lines.map(l=>({...l,alternatives:[...l.alternatives]}))}:emptyDraft());
   const [tagText,setTagText]=useState('');
   const tagList=useId();
+  const [tagsOpen,setTagsOpen]=useState(false),[activeTag,setActiveTag]=useState(-1);
+  const searchTag=(value:string)=>tagKey(value).normalize('NFD').replace(/\p{M}/gu,'');
+  const suggestedTags=cleanTags(availableTags).filter(tag=>!draft.tags.some(value=>tagKey(value)===tagKey(tag))&&searchTag(tag).includes(searchTag(tagText)));
+  const showTags=tagsOpen&&suggestedTags.length>0;
+  useEffect(()=>{if(showTags&&activeTag>=0)document.getElementById(tagList+'-option-'+activeTag)?.scrollIntoView?.({block:'nearest'});},[showTags,activeTag,tagList]);
   const [picker,setPicker]=useState<'ingredient'|number|null>(null);
   const [cropSource,setCropSource]=useState<File|string|null>(null);
   const [localSource,setLocalSource]=useState<File|null>(null);
@@ -29,9 +34,10 @@ export default function RecipeEditor({ original, houseId, ingredients, available
     else if(typeof picker==='number')setDraft(d=>({...d,lines:d.lines.map((l,index)=>index===picker?{...l,alternatives:[...l.alternatives,id]}:l)}));
     setPicker(null);
   }
-  function addTag(){
-    if(!normalizeTag(tagText))return;const tags=cleanTags([...draft.tags,tagText]);const problem=validateTags(tags);
-    if(problem){setError(problem);return;}setDraft(d=>({...d,tags}));setTagText('');setError('');
+  function addTag(value=tagText){
+    value=availableTags.find(tag=>tagKey(tag)===tagKey(value))||value;
+    if(!normalizeTag(value))return;const tags=cleanTags([...draft.tags,value]);const problem=validateTags(tags);
+    if(problem){setError(problem);return;}setDraft(d=>({...d,tags}));setTagText('');setError('');setTagsOpen(false);setActiveTag(-1);
   }
   async function submit(e:React.FormEvent) {
     e.preventDefault();if(busy||!online||cropSource)return;
@@ -57,8 +63,15 @@ export default function RecipeEditor({ original, houseId, ingredients, available
       <label>Nombre del plato<input required maxLength={120} value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label>
       <label>Descripción<textarea maxLength={500} rows={2} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})}/></label>
       <fieldset className="recipe-tags"><legend>Etiquetas</legend>
-       <div className="tag-entry"><label className="sr-only" htmlFor={tagList}>Nueva etiqueta</label><input id={tagList} list={tagList+'-suggestions'} value={tagText} maxLength={160} onChange={event=>setTagText(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'&&!event.nativeEvent.isComposing){event.preventDefault();addTag();}}}/><button type="button" className="secondary compact" aria-label="Añadir etiqueta" disabled={!normalizeTag(tagText)} onClick={addTag}>+</button></div>
-       <datalist id={tagList+'-suggestions'}>{availableTags.filter(tag=>!draft.tags.some(value=>tagKey(value)===tagKey(tag))).map(tag=><option key={tag} value={tag}/>)}</datalist>
+       <div className="tag-selector" onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)){setTagsOpen(false);setActiveTag(-1);}}}>
+        <div className="tag-entry"><label className="sr-only" htmlFor={tagList}>Nueva etiqueta</label><input id={tagList} role="combobox" aria-autocomplete="list" aria-expanded={showTags} aria-controls={tagList+'-suggestions'} aria-activedescendant={showTags&&activeTag>=0&&activeTag<suggestedTags.length?tagList+'-option-'+activeTag:undefined} autoComplete="off" onClick={()=>{setTagsOpen(true);setActiveTag(-1);}} value={tagText} maxLength={160} onFocus={()=>{setTagsOpen(true);setActiveTag(-1);}} onChange={event=>{setTagText(event.target.value);setTagsOpen(true);setActiveTag(-1);}} onKeyDown={event=>{
+         if(event.nativeEvent.isComposing)return;
+         if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();setTagsOpen(true);if(suggestedTags.length)setActiveTag(value=>event.key==='ArrowDown'?(value+1)%suggestedTags.length:(value<=0?suggestedTags.length-1:value-1));}
+         else if(event.key==='Escape'){event.preventDefault();setTagsOpen(false);setActiveTag(-1);}
+         else if(event.key==='Enter'){event.preventDefault();addTag(showTags&&activeTag>=0?suggestedTags[activeTag]:tagText);}
+        }}/><button type="button" className="secondary compact" aria-label="Añadir etiqueta" disabled={!normalizeTag(tagText)} onClick={()=>addTag()}>+</button></div>
+        {showTags&&<ul id={tagList+'-suggestions'} className="tag-suggestions" role="listbox" aria-label="Etiquetas existentes">{suggestedTags.map((tag,index)=><li key={tag} role="presentation"><button type="button" role="option" id={tagList+'-option-'+index} aria-selected={activeTag===index} tabIndex={-1} onPointerDown={event=>event.preventDefault()} onClick={()=>addTag(tag)}>{tag}</button></li>)}</ul>}
+       </div>
        {draft.tags.length>0&&<ul className="tag-chips">{draft.tags.map(tag=><li key={tag}><button type="button" className="secondary compact" aria-label={`Quitar etiqueta ${tag}`} onClick={()=>setDraft(d=>({...d,tags:d.tags.filter(value=>value!==tag)}))}>{tag}<span aria-hidden="true"> ×</span></button></li>)}</ul>}
       </fieldset>
       <div className="photo-controls">

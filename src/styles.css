@@ -403,3 +403,8 @@ button.dialog-close { display: grid; place-items: center; width: 44px; height: 4
 button.recipe-action-icon { display: grid; place-items: center; width: 46px; min-height: 46px; padding: 10px; color: var(--accent); background: var(--surface); border: 1px solid var(--border); }
 button.recipe-action-icon:hover:not(:disabled) { background: var(--soft); }
 .recipe-action-icon svg { width: 23px; height: 23px; }
+
+.tag-selector { position: relative; }
+.tag-suggestions { max-height: 200px; overflow-y: auto; list-style: none; margin: 4px 0 12px; padding: 4px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.tag-suggestions button { display: block; width: 100%; margin: 0; padding: 10px 12px; min-height: 44px; text-align: left; background: transparent; color: var(--text); font-weight: 450; overflow-wrap: anywhere; }
+.tag-suggestions button:hover, .tag-suggestions button[aria-selected=true] { background: var(--soft); color: var(--accent); }
